@@ -1,0 +1,150 @@
+/*
+ * @sawala/formulir-react — baseline styles
+ *
+ * All visual properties go through the --formulir-* CSS variables. Consumers
+ * theme the form by setting any subset of the variables on .formulir-form (or
+ * a parent of it) — no JS re-render required. Power-users compose Tailwind /
+ * design-system classes via the `appearance.elements` prop instead; both work
+ * together, with `elements` overrides taking precedence.
+ *
+ * Each interactive element also carries a data-formulir-element attribute so
+ * consumers can target it from raw CSS without depending on internal class
+ * names. Keep these attribute names stable.
+ */
+
+.formulir-form {
+  --formulir-color-primary:        #1f7aec;
+  --formulir-color-primary-hover:  #1862c4;
+  --formulir-color-text:           #111827;
+  --formulir-color-muted:          #6b7280;
+  --formulir-color-error:          #dc2626;
+  --formulir-color-bg:             #ffffff;
+  --formulir-color-border:         #d1d5db;
+  --formulir-radius:               0.5rem;
+  --formulir-spacing:              0.75rem;
+  --formulir-font-family:          inherit;
+  --formulir-font-size:            0.875rem;
+
+  display:     flex;
+  flex-direction: column;
+  gap:         var(--formulir-spacing);
+  font-family: var(--formulir-font-family);
+  font-size:   var(--formulir-font-size);
+  color:       var(--formulir-color-text);
+  background:  var(--formulir-color-bg);
+  line-height: 1.5;
+}
+
+.formulir-field {
+  display:     flex;
+  flex-direction: column;
+  gap: calc(var(--formulir-spacing) * 0.5);
+}
+
+.formulir-label {
+  font-weight: 500;
+  font-size: calc(var(--formulir-font-size) * 0.95);
+  color: var(--formulir-color-text);
+}
+
+.formulir-required {
+  color: var(--formulir-color-error);
+}
+
+.formulir-input,
+.formulir-form textarea.formulir-input,
+.formulir-form select.formulir-input {
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--formulir-color-border);
+  border-radius: var(--formulir-radius);
+  background: var(--formulir-color-bg);
+  color: var(--formulir-color-text);
+  font: inherit;
+}
+
+.formulir-input:focus,
+.formulir-form textarea.formulir-input:focus,
+.formulir-form select.formulir-input:focus {
+  outline: 2px solid var(--formulir-color-primary);
+  outline-offset: 1px;
+}
+
+.formulir-input[aria-invalid='true'] {
+  border-color: var(--formulir-color-error);
+}
+
+.formulir-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--formulir-spacing) * 0.5);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.formulir-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--formulir-color-primary);
+}
+
+.formulir-submit {
+  margin-top: calc(var(--formulir-spacing) * 0.5);
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border: 0;
+  border-radius: var(--formulir-radius);
+  background: var(--formulir-color-primary);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.formulir-submit:hover {
+  background: var(--formulir-color-primary-hover);
+}
+
+.formulir-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.formulir-error-text,
+.formulir-submit-error {
+  font-size: calc(var(--formulir-font-size) * 0.9);
+  color: var(--formulir-color-error);
+  margin: 0;
+}
+
+.formulir-loading,
+.formulir-error,
+.formulir-success {
+  padding: var(--formulir-spacing);
+  border: 1px solid var(--formulir-color-border);
+  border-radius: var(--formulir-radius);
+  color: var(--formulir-color-muted);
+}
+
+.formulir-success {
+  border-color: #bbf7d0;
+  background:  #f0fdf4;
+  color:       #166534;
+}
+
+.formulir-error {
+  border-color: #fecaca;
+  background:  #fef2f2;
+  color:       var(--formulir-color-error);
+}
+
+.formulir-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin-top: calc(var(--formulir-spacing) * 0.5);
+  color: var(--formulir-color-primary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
