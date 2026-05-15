@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1 — republish of 0.3.0
+
+- **Bad publish in 0.3.0**: the `0.3.0` tarball on npm shipped a stale pre-Turnstile bundle (21 KB) under the bumped version string. A fresh `npm run build` from main produces the correct ~26 KB bundle containing `renderTurnstile`, `cf-turnstile-response`, the `captcha` slot, and the new error codes — none of which made it into `0.3.0`. Result: every consumer of `0.3.0` got a no-op for spam protection regardless of dashboard configuration.
+- **Fix**: `0.3.1` is a clean rebuild with all the `0.3.0` features actually present in the tarball.
+- **Guardrail**: added a `verify-bundle` script that fails publish when the built `dist/index.js` lacks markers present in `src/`. Chained into `prepublishOnly` so a future stale-dist publish aborts before it lands on npm.
+- **No code or API changes** compared to the intended `0.3.0`. Consumers on `^0.2.x` should jump straight to `^0.3.1`.
+
 ## 0.3.0
 
 - Cloudflare Turnstile spam protection. When the parent form has captcha enabled

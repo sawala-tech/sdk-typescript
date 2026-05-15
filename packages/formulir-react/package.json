@@ -1,6 +1,6 @@
 {
   "name": "@sawala/formulir-react",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "React components and headless hooks for embedding Sawala Formulir forms — drop-in for Next.js, Vite, Remix, and any React 18+ app.",
   "keywords": ["sawala", "sawala-tech", "sawala-cloud", "formulir", "react"],
   "private": false,
@@ -38,6 +38,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "verify-bundle": "node -e \"const fs=require('fs'),src=fs.readFileSync('src/form.tsx','utf8'),dist=fs.readFileSync('dist/index.js','utf8');for (const m of ['renderTurnstile','cf-turnstile-response','captchaSitekey']) { if (src.includes(m) && !dist.includes(m)) { console.error('publish guard: dist/ is missing marker present in src/:', m); process.exit(1); } }\"",
+    "prepublishOnly": "npm run build && npm run verify-bundle"
   }
 }
