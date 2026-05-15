@@ -77,6 +77,32 @@ Override any of the `--formulir-*` variables in your own CSS. The form repaints 
 </FormulirForm.Headless>
 ```
 
+## Hidden fields and pre-filled values
+
+Mark any field as **Hidden** in the dashboard's form editor (Required / Unique / **Hidden**) when its value should come from the embedder rather than the end-user. The default renderer skips hidden fields entirely; you supply their values via the `values` prop:
+
+```tsx
+<FormulirForm
+  slug="download-report"
+  values={{
+    report_slug:   'annual-report-2024',
+    report_locale: 'id',
+    report_title:  'Laporan Tahunan 2024',
+  }}
+  onSubmit={(s) => console.log(s)}
+/>
+```
+
+`values` is a one-shot pre-fill applied when the form definition resolves; subsequent prop changes are intentionally ignored (this is not a controlled-input mechanism). It also works for visible fields — the end-user can still edit those after the prefill seeds them.
+
+Hidden required fields whose value isn't supplied cause submission to fail with the same `FIELD_VALIDATION_FAILED` error as a missing visible required field — so always pass the prop when a hidden field is required.
+
+For the iframe embed, supply the same values via URL query parameters with bracket syntax:
+
+```html
+<iframe src="https://formulir.id/embed/<projId>/<slug>?key=pk_live_…&values[report_slug]=annual-report-2024&values[report_locale]=id"></iframe>
+```
+
 ## API
 
 ```ts

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Docs: add a "Hidden fields and pre-filled values" section to the README documenting the `values` prop on `<FormulirForm>` and the `?values[name]=value` URL syntax for the embed iframe. README didn't make it into the `0.2.0` tarball; `0.2.1` exists solely to publish the corrected docs. No code changes.
+
 ## 0.2.0
 
 - New `values` prop on `<FormulirForm>` for pre-populating field values by name. Applied once when the form definition resolves; subsequent changes are ignored.
