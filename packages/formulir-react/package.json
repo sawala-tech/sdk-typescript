@@ -1,7 +1,8 @@
 {
   "name": "@sawala/formulir-react",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "React components and headless hooks for embedding Sawala Formulir forms — drop-in for Next.js, Vite, Remix, and any React 18+ app.",
+  "keywords": ["sawala", "sawala-tech", "sawala-cloud", "formulir", "react"],
   "private": false,
   "publishConfig": { "access": "public" },
   "type": "module",

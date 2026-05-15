@@ -40,6 +40,12 @@ export interface SchemaField {
   required:    boolean
   unique?:     boolean
   localized?:  boolean
+  // When true, the default <FormulirForm> renderer skips this field entirely.
+  // The value still participates in submission and validation, so embedders
+  // must pre-populate it via the `values` prop or via `setValue` in headless
+  // mode. Has no effect in <FormulirForm.Headless>, which gives the consumer
+  // full rendering control.
+  hidden?:     boolean
   default?:    unknown
   validation?: FieldValidation
   options?:    FieldOptions

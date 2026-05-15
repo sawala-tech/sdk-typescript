@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { useFormulirContext } from './provider'
 import { useFormulirForm, type UseFormulirFormReturn } from './hook'
 import { renderField } from './renderer'
@@ -16,6 +16,14 @@ export interface FormulirFormProps {
   /** Override the submit button label. */
   submitLabel?:   string
   submittingLabel?: string
+  /**
+   * Pre-populate field values by name. Applied once when the form definition
+   * resolves; subsequent prop changes are intentionally ignored — this is a
+   * one-shot pre-fill, not a controlled-input mechanism. Useful for hidden
+   * fields (whose values must come from the embedder) and for seeding
+   * defaults on visible fields (still editable by the end-user).
+   */
+  values?: Record<string, unknown>
 }
 
 function SuccessView({
@@ -68,6 +76,20 @@ export function FormulirForm(props: FormulirFormProps) {
     onError:  props.onError,
   })
 
+  // One-shot pre-fill from the `values` prop. Fires once after the form
+  // definition resolves. We do not re-fire on subsequent `props.values`
+  // changes — the prop is documented as a pre-fill, not a controlled input.
+  const filledRef = useRef(false)
+  useEffect(() => {
+    if (filledRef.current)  return
+    if (!state.definition)  return
+    if (!props.values)      return
+    for (const [k, v] of Object.entries(props.values)) {
+      state.setValue(k, v)
+    }
+    filledRef.current = true
+  }, [state.definition, props.values, state])
+
   if (state.status === 'loading-definition') {
     return (
       <div
@@ -115,23 +137,25 @@ export function FormulirForm(props: FormulirFormProps) {
       onSubmit={(e) => { e.preventDefault(); void state.submit() }}
       noValidate
     >
-      {state.definition.fields.map((field) => (
-        <div
-          key={field.name}
-          className={cn('formulir-field', appearance?.elements?.field)}
-          data-formulir-element="field"
-          data-formulir-field={field.name}
-          data-formulir-type={field.type}
-        >
-          {renderField({
-            field,
-            value:      state.values[field.name],
-            onChange:   (v) => state.setValue(field.name, v),
-            error:      state.errors[field.name],
-            appearance,
-          })}
-        </div>
-      ))}
+      {state.definition.fields
+        .filter((field) => !field.hidden)
+        .map((field) => (
+          <div
+            key={field.name}
+            className={cn('formulir-field', appearance?.elements?.field)}
+            data-formulir-element="field"
+            data-formulir-field={field.name}
+            data-formulir-type={field.type}
+          >
+            {renderField({
+              field,
+              value:      state.values[field.name],
+              onChange:   (v) => state.setValue(field.name, v),
+              error:      state.errors[field.name],
+              appearance,
+            })}
+          </div>
+        ))}
 
       {state.status === 'error-submit' && state.error
         ? (
