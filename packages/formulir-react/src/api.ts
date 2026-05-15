@@ -32,15 +32,22 @@ async function parseError(res: Response): Promise<FormulirError> {
 }
 
 function humanMessage(status: number, code: string): string {
+  if (status === 400 && code === 'CAPTCHA_REQUIRED') {
+    return 'Please complete the spam-protection challenge before submitting.'
+  }
   if (status === 401) return 'Invalid or expired API key.'
   if (status === 403) {
     if (code === 'FORM_PRIVATE')                  return 'This form is not accepting submissions right now.'
     if (code === 'API_KEY_REQUIRES_PROJECT_SCOPE') return 'The API key must be project-scoped.'
+    if (code === 'CAPTCHA_FAILED')                 return 'Spam-protection check failed. Please try the challenge again.'
     return 'This origin is not allowed to submit to this form.'
   }
   if (status === 404) return 'Form not found.'
   if (status === 413) return 'The submission exceeds the maximum allowed size.'
   if (status === 429) return 'Too many submissions — please try again in a minute.'
+  if (status === 503 && code === 'CAPTCHA_NOT_CONFIGURED') {
+    return 'This form requires spam protection but the project has no spam-protection key configured.'
+  }
   if (status >= 500)  return 'The form service is temporarily unavailable.'
   return code
 }
@@ -65,10 +72,16 @@ export async function submitForm(
   slug:   string,
   values: Record<string, unknown>,
   files:  Record<string, File>,
+  extras: Record<string, unknown> = {},
 ): Promise<SubmissionResult> {
   const formData = new FormData()
 
-  for (const [name, value] of Object.entries(values)) {
+  // `extras` win on key collision; they carry submit-time-only values
+  // (currently the Cloudflare Turnstile token) that must not be stored in
+  // the user's editable form state but must reach the multipart payload.
+  const merged: Record<string, unknown> = { ...values, ...extras }
+
+  for (const [name, value] of Object.entries(merged)) {
     if (value == null) continue
     if (typeof value === 'boolean') {
       // Match the iframe widget contract — boolean fields post 'true' or are absent.

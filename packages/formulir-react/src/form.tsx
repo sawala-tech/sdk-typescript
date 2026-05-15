@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useFormulirContext } from './provider'
 import { useFormulirForm, type UseFormulirFormReturn } from './hook'
 import { renderField } from './renderer'
+import { renderTurnstile, type TurnstileInstance } from './turnstile'
 import { appearanceToStyle, cn, mergeAppearance } from './utils'
 import type { FormSettings, FormulirAppearance, FormulirError, SubmissionResult } from './types'
 
@@ -129,12 +130,128 @@ export function FormulirForm(props: FormulirFormProps) {
 
   if (!state.definition) return null
 
+  const captcha = state.definition.settings.captcha
+  const captchaEnabled       = captcha?.enabled === true && captcha.provider === 'turnstile'
+  const captchaMisconfigured = captchaEnabled && captcha?.misconfigured === true
+  const captchaSitekey       = captchaEnabled ? captcha?.sitekey : undefined
+
+  if (captchaMisconfigured) {
+    return (
+      <div
+        className={cn('formulir-form', 'formulir-error', props.className, appearance?.elements?.form, appearance?.elements?.error)}
+        style={rootStyle}
+        data-formulir-element="error"
+        role="alert"
+      >
+        This form requires spam protection but the project has no spam-protection key configured.
+      </div>
+    )
+  }
+
+  return (
+    <FormBody
+      state={state}
+      appearance={appearance}
+      rootStyle={rootStyle}
+      className={props.className}
+      submitLabel={props.submitLabel}
+      submittingLabel={props.submittingLabel}
+      captchaSitekey={captchaSitekey}
+    />
+  )
+}
+
+interface FormBodyProps {
+  state:            UseFormulirFormReturn
+  appearance?:      FormulirAppearance
+  rootStyle?:       React.CSSProperties
+  className?:       string
+  submitLabel?:     string
+  submittingLabel?: string
+  captchaSitekey?:  string
+}
+
+function FormBody({
+  state,
+  appearance,
+  rootStyle,
+  className,
+  submitLabel,
+  submittingLabel,
+  captchaSitekey,
+}: FormBodyProps) {
+  const captchaContainerRef = useRef<HTMLDivElement | null>(null)
+  const captchaInstanceRef  = useRef<TurnstileInstance | null>(null)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaMissing, setCaptchaMissing] = useState(false)
+
+  // Mount the Turnstile widget once the form is ready and a sitekey is
+  // available. The widget's callback writes the token into local state so
+  // the form can attach it to the submit payload. The script is loaded
+  // lazily inside renderTurnstile().
+  useEffect(() => {
+    if (!captchaSitekey)               return
+    if (!captchaContainerRef.current)  return
+
+    let cancelled = false
+    let instance: TurnstileInstance | null = null
+    renderTurnstile(
+      captchaContainerRef.current,
+      captchaSitekey,
+      (token) => {
+        if (cancelled) return
+        setCaptchaToken(token)
+        setCaptchaMissing(false)
+      },
+      () => {
+        if (cancelled) return
+        setCaptchaToken(null)
+      },
+    ).then(
+      (inst) => {
+        if (cancelled) { inst.remove(); return }
+        instance = inst
+        captchaInstanceRef.current = inst
+      },
+      () => { /* script-load or render failure handled via captcha-error state */ },
+    )
+
+    return () => {
+      cancelled = true
+      instance?.remove()
+      captchaInstanceRef.current = null
+    }
+  }, [captchaSitekey])
+
+  // After a successful submit, reset the widget so the user can issue a
+  // fresh token if they choose "Submit another response". The token is
+  // single-use; Cloudflare's siteverify rejects the same token twice.
+  useEffect(() => {
+    if (state.status === 'submitted') {
+      captchaInstanceRef.current?.reset()
+      setCaptchaToken(null)
+    }
+  }, [state.status])
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (captchaSitekey && !captchaToken) {
+      setCaptchaMissing(true)
+      return
+    }
+    setCaptchaMissing(false)
+    const extras = captchaToken ? { 'cf-turnstile-response': captchaToken } : undefined
+    void state.submit(extras)
+  }
+
+  if (!state.definition) return null
+
   return (
     <form
-      className={cn('formulir-form', props.className, appearance?.elements?.form)}
+      className={cn('formulir-form', className, appearance?.elements?.form)}
       style={rootStyle}
       data-formulir-element="form"
-      onSubmit={(e) => { e.preventDefault(); void state.submit() }}
+      onSubmit={handleSubmit}
       noValidate
     >
       {state.definition.fields
@@ -157,6 +274,28 @@ export function FormulirForm(props: FormulirFormProps) {
           </div>
         ))}
 
+      {captchaSitekey
+        ? (
+          <div
+            className={cn('formulir-captcha', appearance?.elements?.captcha)}
+            data-formulir-element="captcha"
+          >
+            <div ref={captchaContainerRef} />
+            {captchaMissing
+              ? (
+                <p
+                  className={cn('formulir-submit-error', appearance?.elements?.errorText)}
+                  data-formulir-element="captcha-required"
+                  role="alert"
+                >
+                  Please complete the spam-protection challenge before submitting.
+                </p>
+              )
+              : null}
+          </div>
+        )
+        : null}
+
       {state.status === 'error-submit' && state.error
         ? (
           <p
@@ -176,8 +315,8 @@ export function FormulirForm(props: FormulirFormProps) {
         disabled={state.submitting}
       >
         {state.submitting
-          ? (props.submittingLabel ?? 'Submitting…')
-          : (props.submitLabel ?? 'Submit')}
+          ? (submittingLabel ?? 'Submitting…')
+          : (submitLabel ?? 'Submit')}
       </button>
     </form>
   )

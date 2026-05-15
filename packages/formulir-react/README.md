@@ -65,7 +65,7 @@ Override any of the `--formulir-*` variables in your own CSS. The form repaints 
 </FormulirProvider>
 ```
 
-`variables` writes inline CSS variables on the form root. `elements` merges class names into specific slots (`form`, `field`, `fieldLabel`, `inputField`, `submitButton`, `errorText`, `loading`, `error`, `success`).
+`variables` writes inline CSS variables on the form root. `elements` merges class names into specific slots (`form`, `field`, `fieldLabel`, `inputField`, `submitButton`, `errorText`, `loading`, `error`, `success`, `captcha`).
 
 ### 3. Headless — full ownership
 
@@ -103,6 +103,44 @@ For the iframe embed, supply the same values via URL query parameters with brack
 <iframe src="https://formulir.id/embed/<projId>/<slug>?key=pk_live_…&values[report_slug]=annual-report-2024&values[report_locale]=id"></iframe>
 ```
 
+## Spam protection (Cloudflare Turnstile)
+
+Turn on Cloudflare Turnstile in two clicks from the dashboard:
+
+1. **Per project, once**: open **Settings → Projects → Edit → Spam protection**, paste a sitekey + secret from your own Cloudflare account (sitekeys come from `dash.cloudflare.com → Turnstile → Add Widget`), click **Test** to confirm Cloudflare accepts the secret, then **Save**. Your secret is encrypted at rest before it lands in Sawala's database.
+2. **Per form**: in the form's settings sidebar, flip the **Spam protection** switch and save.
+
+After that, `<FormulirForm>` renders a Turnstile challenge above the submit button automatically — there is **no extra code** to write. The package picks up `settings.captcha.sitekey` from the form-definition response, mounts the widget, blocks submit until the challenge is solved, and resets the widget after each successful submission.
+
+If your site sends a `Content-Security-Policy` header, allow:
+
+```
+script-src  https://challenges.cloudflare.com
+frame-src   https://challenges.cloudflare.com
+```
+
+New error codes surfaced through the existing `error` value (`error.code`, `error.message`):
+
+| Code | When |
+|---|---|
+| `CAPTCHA_REQUIRED` | Submit ran without a Turnstile token (e.g. the user clicked Submit before solving the challenge — the package usually prevents this, but it can happen in headless mode). |
+| `CAPTCHA_FAILED` | Cloudflare's siteverify rejected the token. The widget auto-resets so the user can try again. |
+| `CAPTCHA_NOT_CONFIGURED` | The form's `captcha.enabled` is true but the parent project has no Turnstile keys saved. The operator needs to complete step 1 above. |
+
+**Headless mode**: the widget is not rendered for you. You read `definition.settings.captcha.sitekey`, render Turnstile yourself (any Cloudflare-recommended way), and pass the resulting token to `submit({ 'cf-turnstile-response': token })`. `submit` accepts an optional `extras` record that's merged into the value map at post time:
+
+```tsx
+<FormulirForm.Headless slug="contact">
+  {({ definition, submit }) => {
+    const sitekey = definition?.settings.captcha?.sitekey
+    // …render Turnstile with `sitekey`, capture `token`…
+    return <button onClick={() => submit({ 'cf-turnstile-response': token })}>Send</button>
+  }}
+</FormulirForm.Headless>
+```
+
+The Sawala-hosted iframe embed (`https://formulir.id/embed/…`) handles Turnstile internally using a Sawala-managed widget — no setup needed on the embed path beyond the per-form toggle.
+
 ## API
 
 ```ts
@@ -114,6 +152,8 @@ const {
   setValue, submit, reset,
 } = useFormulirForm({ slug: 'contact' })
 ```
+
+`submit` accepts an optional `extras` record: `submit({ 'cf-turnstile-response': token })`. Extras are merged into the values map at post time (extras win on key collision). Calling `submit()` with no args is unchanged.
 
 Status values: `'loading-definition' | 'ready' | 'submitting' | 'submitted' | 'error-definition' | 'error-submit'`.
 

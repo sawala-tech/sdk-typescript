@@ -40,7 +40,14 @@ export interface UseFormulirFormReturn {
   /** Last error encountered (definition fetch or submit). */
   error:      FormulirError | null
   setValue:   (name: string, value: unknown) => void
-  submit:     () => Promise<void>
+  /**
+   * Submit the form. `extras` is merged into the value map at post time
+   * (extras win on key collision) and is intended for submit-only fields
+   * like the Cloudflare Turnstile token (`cf-turnstile-response`) that
+   * should not live in the user-editable form state. Calling `submit()`
+   * with no arguments remains valid and behaves as before.
+   */
+  submit:     (extras?: Record<string, unknown>) => Promise<void>
   reset:      () => void
 }
 
@@ -113,7 +120,7 @@ export function useFormulirForm(opts: UseFormulirFormOptions): UseFormulirFormRe
     filesRef.current = {}
   }, [definition])
 
-  const submit = useCallback(async () => {
+  const submit = useCallback(async (extras?: Record<string, unknown>) => {
     if (!definition) return
 
     const result = validateValues(definition.fields, values)
@@ -131,6 +138,7 @@ export function useFormulirForm(opts: UseFormulirFormOptions): UseFormulirFormRe
         definition.slug,
         values,
         filesRef.current,
+        extras,
       )
       setStatus('submitted')
       onSubmit?.(submission)

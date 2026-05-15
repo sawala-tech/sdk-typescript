@@ -58,6 +58,14 @@ export interface FormSettings {
     | { mode: 'redirect'; url: string }
   maxSubmissionsPerDay?: number
   visibility?: 'public' | 'private'
+  captcha?: {
+    provider: 'turnstile'
+    enabled:  boolean
+    /** Live sitekey, injected by the form-definition endpoint when enabled and configured. */
+    sitekey?: string
+    /** Set when the form has captcha.enabled but the project has no BYO config. */
+    misconfigured?: boolean
+  }
 }
 
 export interface Form {
@@ -104,6 +112,7 @@ export type FormulirElementSlot =
   | 'loading'
   | 'error'
   | 'success'
+  | 'captcha'
 
 export type FormulirCssVariable =
   | 'colorPrimary'
