@@ -7,6 +7,9 @@ export type { FormulirFormProps, FormulirHeadlessProps } from './form'
 export { useFormulirForm } from './hook'
 export type { UseFormulirFormOptions, UseFormulirFormReturn } from './hook'
 
+export { renderField, resolveLabel, resolveSuccessMessage } from './renderer'
+export type { RenderFieldArgs } from './renderer'
+
 export { buildZodSchema, validateValues } from './validation'
 
 export type {
@@ -16,6 +19,7 @@ export type {
   FieldType,
   FieldValidation,
   FieldOptions,
+  Locale,
   Submission,
   SubmissionResult,
   FormulirAppearance,

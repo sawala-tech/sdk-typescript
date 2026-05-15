@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useFormulirContext } from './provider'
 import { useFormulirForm, type UseFormulirFormReturn } from './hook'
-import { renderField } from './renderer'
+import { renderField, resolveSuccessMessage } from './renderer'
 import { renderTurnstile, type TurnstileInstance } from './turnstile'
 import { appearanceToStyle, cn, mergeAppearance } from './utils'
 import type { FormSettings, FormulirAppearance, FormulirError, SubmissionResult } from './types'
@@ -25,16 +25,26 @@ export interface FormulirFormProps {
    * defaults on visible fields (still editable by the end-user).
    */
   values?: Record<string, unknown>
+  /**
+   * Pick a BCP-47 locale from the form's `settings.locales`. Drives per-field
+   * label resolution (`field.labels[locale]`) and the post-submission success
+   * message (`settings.success.messages[locale]`). Falls back through
+   * `settings.defaultLocale`, then the canonical singular strings. Overrides
+   * any `locale` set on the parent `<FormulirProvider>`.
+   */
+  locale?: string
 }
 
 function SuccessView({
   settings,
   appearance,
   onReset,
+  locale,
 }: {
   settings:   FormSettings
   appearance?: FormulirAppearance
   onReset:    () => void
+  locale?:    string
 }) {
   const success = settings.success ?? { mode: 'message' as const, message: 'Thanks! Your response has been received.' }
 
@@ -47,13 +57,15 @@ function SuccessView({
     return null
   }
 
+  const messageText = resolveSuccessMessage(success, locale, settings.defaultLocale)
+
   return (
     <div
       className={cn('formulir-success', appearance?.elements?.success)}
       data-formulir-element="success"
       role="status"
     >
-      <p>{success.message}</p>
+      <p>{messageText}</p>
       <button
         type="button"
         className={cn('formulir-link', appearance?.elements?.submitButton)}
@@ -70,6 +82,11 @@ export function FormulirForm(props: FormulirFormProps) {
   const ctx = useFormulirContext()
   const appearance = mergeAppearance(ctx.appearance, props.appearance)
   const rootStyle  = appearanceToStyle(appearance)
+
+  // Form-level locale wins over provider-level locale. The fallback chain
+  // continues into `settings.defaultLocale` at the use sites below, since the
+  // definition is not available until after `useFormulirForm` resolves.
+  const effectiveLocale = props.locale ?? ctx.locale
 
   const state = useFormulirForm({
     slug:     props.slug,
@@ -123,7 +140,12 @@ export function FormulirForm(props: FormulirFormProps) {
         style={rootStyle}
         data-formulir-element="form"
       >
-        <SuccessView settings={state.definition.settings} appearance={appearance} onReset={state.reset} />
+        <SuccessView
+          settings={state.definition.settings}
+          appearance={appearance}
+          onReset={state.reset}
+          locale={effectiveLocale}
+        />
       </div>
     )
   }
@@ -157,6 +179,7 @@ export function FormulirForm(props: FormulirFormProps) {
       submitLabel={props.submitLabel}
       submittingLabel={props.submittingLabel}
       captchaSitekey={captchaSitekey}
+      locale={effectiveLocale}
     />
   )
 }
@@ -169,6 +192,7 @@ interface FormBodyProps {
   submitLabel?:     string
   submittingLabel?: string
   captchaSitekey?:  string
+  locale?:          string
 }
 
 function FormBody({
@@ -179,6 +203,7 @@ function FormBody({
   submitLabel,
   submittingLabel,
   captchaSitekey,
+  locale,
 }: FormBodyProps) {
   const captchaContainerRef = useRef<HTMLDivElement | null>(null)
   const captchaInstanceRef  = useRef<TurnstileInstance | null>(null)
@@ -245,6 +270,8 @@ function FormBody({
   }
 
   if (!state.definition) return null
+  const definition = state.definition
+  const defaultLocale = definition.settings.defaultLocale
 
   return (
     <form
@@ -254,7 +281,7 @@ function FormBody({
       onSubmit={handleSubmit}
       noValidate
     >
-      {state.definition.fields
+      {definition.fields
         .filter((field) => !field.hidden)
         .map((field) => (
           <div
@@ -266,10 +293,12 @@ function FormBody({
           >
             {renderField({
               field,
-              value:      state.values[field.name],
-              onChange:   (v) => state.setValue(field.name, v),
-              error:      state.errors[field.name],
+              value:         state.values[field.name],
+              onChange:      (v) => state.setValue(field.name, v),
+              error:         state.errors[field.name],
               appearance,
+              locale,
+              defaultLocale,
             })}
           </div>
         ))}

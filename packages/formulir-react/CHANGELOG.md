@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.4.0 — 2026-05-15
+
+- New `locale` prop on `<FormulirProvider>` and `<FormulirForm>`. When set,
+  the renderer resolves each field's label through `field.labels?.[locale]`,
+  falling back through `field.labels?.[settings.defaultLocale]`, then
+  `field.label`, then `field.name`. The post-submission success message
+  resolves through the same chain via `settings.success.messages?.[locale]`,
+  falling back through `settings.success.messages?.[settings.defaultLocale]`,
+  then `settings.success.message`. Provider-level `locale` is overridden by
+  any form-level `locale` on the same `<FormulirForm>`.
+- New exported helpers `resolveLabel(field, locale, defaultLocale)` and
+  `resolveSuccessMessage(success, locale, defaultLocale)` for consumers
+  using `<FormulirForm.Headless>` or a custom renderer.
+- Type widenings: `SchemaField` gains `labels?: Record<string, string>`;
+  `FormSettings` gains `locales?: string[]` and `defaultLocale?: string`;
+  the success-message variant of `FormSettings.success` gains
+  `messages?: Record<string, string>`. New `Locale = string` type alias
+  exported for documentation. All additions are optional and backwards
+  compatible — existing consumers see no behavioural change.
+- Skipped 0.3.x is reserved for the prior Turnstile work; this minor advances
+  to 0.4.0 because it adds new public-API surface (the `locale` prop and
+  helper exports). Fully additive — no migration required.
+
 ## 0.3.1 — republish of 0.3.0
 
 - **Bad publish in 0.3.0**: the `0.3.0` tarball on npm shipped a stale pre-Turnstile bundle (21 KB) under the bumped version string. A fresh `npm run build` from main produces the correct ~26 KB bundle containing `renderTurnstile`, `cf-turnstile-response`, the `captcha` slot, and the new error codes — none of which made it into `0.3.0`. Result: every consumer of `0.3.0` got a no-op for spam protection regardless of dashboard configuration.

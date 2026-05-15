@@ -141,6 +141,43 @@ New error codes surfaced through the existing `error` value (`error.code`, `erro
 
 The Sawala-hosted iframe embed (`https://formulir.id/embed/…`) handles Turnstile internally using a Sawala-managed widget — no setup needed on the embed path beyond the per-form toggle.
 
+## Localised labels and messages
+
+When the form's operator has filled in per-locale field labels and per-locale success messages in the dashboard, pass a BCP-47 locale code to `<FormulirProvider>` (provider-wide default) or to `<FormulirForm>` (per-form override) to pick which translations render.
+
+```tsx
+import { useLocale } from 'next-intl'
+import { FormulirProvider, FormulirForm } from '@sawala/formulir-react'
+
+export function ContactForm() {
+  const locale = useLocale()  // e.g. 'id' or 'en'
+  return (
+    <FormulirProvider apiKey={process.env.NEXT_PUBLIC_FORMULIR_KEY!} locale={locale}>
+      <FormulirForm slug="contact-form" />
+    </FormulirProvider>
+  )
+}
+```
+
+The renderer resolves each field's label as `field.labels?.[locale] → field.labels?.[settings.defaultLocale] → field.label → field.name`. The post-submission success message resolves as `settings.success.messages?.[locale] → settings.success.messages?.[settings.defaultLocale] → settings.success.message`. Empty strings short-circuit to the next fallback (so transient `''` from a host i18n library during hydration never produces an empty `<label></label>`). Toggling `locale` re-renders without a network request — the package fetches the form definition once and resolves locales locally.
+
+For headless consumers, the resolution helpers are exported:
+
+```tsx
+import { resolveLabel, resolveSuccessMessage } from '@sawala/formulir-react'
+
+const label = resolveLabel(field, locale, definition.settings.defaultLocale)
+const text  = resolveSuccessMessage(definition.settings.success, locale, definition.settings.defaultLocale)
+```
+
+The iframe embed accepts the same locale via `?locale=id`:
+
+```html
+<iframe src="https://formulir.id/embed/<projId>/<slug>?key=pk_live_…&locale=id"></iframe>
+```
+
+The embed iframe is server-rendered, so changing `?locale=` requires reloading the iframe — there is no client-side toggle. Submissions are unchanged on the wire (keyed by `field.name`) and the dashboard inbox always shows the canonical singular labels.
+
 ## API
 
 ```ts

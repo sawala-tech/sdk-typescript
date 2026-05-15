@@ -5,6 +5,10 @@
 // workspace package. Keep these in sync with
 // `packages/shared-types/src/index.ts` when fields are added or renamed.
 
+// BCP-47 locale tag — short string like 'en', 'id', 'sv', or 'pt-BR'. The
+// runtime resolver in `renderer.tsx` does not validate against an allow-list.
+export type Locale = string
+
 export type FieldType =
   | 'text'
   | 'richtext'
@@ -36,6 +40,9 @@ export interface FieldOptions extends Record<string, unknown> {
 export interface SchemaField {
   name:        string
   label?:      string
+  /** Per-locale label translations, keyed by short BCP-47 tag (e.g. 'en', 'id', 'sv').
+   *  Resolution at render time: labels?.[requestedLocale] ?? labels?.[defaultLocale] ?? label ?? name. */
+  labels?:     Record<string, string>
   type:        FieldType
   required:    boolean
   unique?:     boolean
@@ -54,7 +61,13 @@ export interface SchemaField {
 
 export interface FormSettings {
   success?:
-    | { mode: 'message'; message: string }
+    | {
+        mode:      'message'
+        message:   string
+        /** Per-locale translations of `message`, keyed by short BCP-47 tag.
+         *  Resolution: messages?.[requestedLocale] ?? messages?.[defaultLocale] ?? message. */
+        messages?: Record<string, string>
+      }
     | { mode: 'redirect'; url: string }
   maxSubmissionsPerDay?: number
   visibility?: 'public' | 'private'
@@ -66,6 +79,10 @@ export interface FormSettings {
     /** Set when the form has captcha.enabled but the project has no BYO config. */
     misconfigured?: boolean
   }
+  /** BCP-47 locale codes the form supports. Free-form on the wire; the dashboard's picker is opinionated. */
+  locales?:       string[]
+  /** Secondary fallback for label/message resolution before the singular canonical strings. */
+  defaultLocale?: string
 }
 
 export interface Form {

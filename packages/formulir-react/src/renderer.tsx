@@ -5,11 +5,62 @@ import type { FormulirAppearance, SchemaField } from './types'
 import { cn } from './utils'
 
 export interface RenderFieldArgs {
-  field:      SchemaField
-  value:      unknown
-  onChange:   (value: unknown) => void
-  error?:     string
-  appearance?: FormulirAppearance
+  field:         SchemaField
+  value:         unknown
+  onChange:      (value: unknown) => void
+  error?:        string
+  appearance?:   FormulirAppearance
+  /** BCP-47 locale to resolve `field.labels` against. Falls through to
+   *  `defaultLocale`, then to `field.label`, then to `field.name`. */
+  locale?:       string
+  /** Fallback locale used when the primary `locale` lookup misses. */
+  defaultLocale?: string
+}
+
+/**
+ * Resolve a field's user-facing label for a given locale.
+ *
+ * Resolution order:
+ *   1. `field.labels?.[locale]`     — the requested translation, if present and non-empty.
+ *   2. `field.labels?.[defaultLocale]` — the form's configured default-locale translation.
+ *   3. `field.label`                — the canonical singular operator-entered label.
+ *   4. `field.name`                 — the field key, as a final safety net.
+ *
+ * Empty-string entries short-circuit to the next fallback. This matters when a
+ * host i18n library hands back `''` during a transient hydration window (e.g.
+ * `next-intl` before the locale is committed).
+ */
+export function resolveLabel(
+  field:         SchemaField,
+  locale:        string | undefined,
+  defaultLocale: string | undefined,
+): string {
+  const labels = field.labels ?? {}
+  if (locale && labels[locale])               return labels[locale]
+  if (defaultLocale && labels[defaultLocale]) return labels[defaultLocale]
+  return field.label ?? field.name
+}
+
+/**
+ * Resolve the post-submission success message for a given locale.
+ *
+ * Resolution order:
+ *   1. `success.messages?.[locale]`        — the requested translation, if present and non-empty.
+ *   2. `success.messages?.[defaultLocale]` — the form's configured default-locale translation.
+ *   3. `success.message`                   — the canonical singular operator-entered message.
+ *
+ * Only meaningful when `success.mode === 'message'`. The redirect variant has
+ * no text to translate; the URL is fixed.
+ */
+export function resolveSuccessMessage(
+  success:       { mode: 'message'; message: string; messages?: Record<string, string> },
+  locale:        string | undefined,
+  defaultLocale: string | undefined,
+): string {
+  const m = success.messages ?? {}
+  if (locale && m[locale])               return m[locale]
+  if (defaultLocale && m[defaultLocale]) return m[defaultLocale]
+  return success.message
 }
 
 // Map of field types to baseline input components. The renderer mirrors
@@ -23,8 +74,9 @@ function inputClassName(appearance: FormulirAppearance | undefined): string {
 }
 
 export function renderField(args: RenderFieldArgs): JSX.Element {
-  const { field, value, onChange, error, appearance } = args
-  const { name, label, type, required } = field
+  const { field, value, onChange, error, appearance, locale, defaultLocale } = args
+  const { name, type, required } = field
+  const resolvedLabel = resolveLabel(field, locale, defaultLocale)
   const id = `formulir-${name}`
 
   const labelNode = (
@@ -33,7 +85,7 @@ export function renderField(args: RenderFieldArgs): JSX.Element {
       className={cn('formulir-label', appearance?.elements?.fieldLabel)}
       data-formulir-element="field-label"
     >
-      {label ?? name}{required && <span className="formulir-required" aria-hidden="true"> *</span>}
+      {resolvedLabel}{required && <span className="formulir-required" aria-hidden="true"> *</span>}
     </label>
   )
 
@@ -122,7 +174,7 @@ export function renderField(args: RenderFieldArgs): JSX.Element {
               onChange={(e) => onChange(e.target.checked)}
               className={cn('formulir-checkbox', appearance?.elements?.inputField)}
             />
-            <span>{label ?? name}{required && <span className="formulir-required" aria-hidden="true"> *</span>}</span>
+            <span>{resolvedLabel}{required && <span className="formulir-required" aria-hidden="true"> *</span>}</span>
           </label>
           {errorNode}
         </>
