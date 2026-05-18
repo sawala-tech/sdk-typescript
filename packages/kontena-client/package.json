@@ -1,0 +1,56 @@
+{
+  "name": "@sawala/kontena-client",
+  "version": "0.0.0",
+  "description": "TypeScript client for the Kontena public read API — Sawala Cloud's headless CMS. Framework-agnostic, runs in Node, browsers, and Cloudflare Workers.",
+  "keywords": [
+    "sawala",
+    "sawala-tech",
+    "sawala-cloud",
+    "kontena",
+    "cms",
+    "headless",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": "Sawala Cloud <hello@sawala.co> (https://sawala.co)",
+  "homepage": "https://github.com/sawala-tech/sdk-typescript/tree/main/packages/kontena-client",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sawala-tech/sdk-typescript.git",
+    "directory": "packages/kontena-client"
+  },
+  "bugs": "https://github.com/sawala-tech/sdk-typescript/issues",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "msw": "^2.4.0"
+  }
+}

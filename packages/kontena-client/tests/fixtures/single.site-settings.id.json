@@ -1,0 +1,14 @@
+{
+  "id": "ckpw5o8a40000xyz",
+  "documentId": "doc_site_settings_id",
+  "locale": "id",
+  "slug": null,
+  "status": "published",
+  "publishedAt": "2026-05-01T00:00:00.000Z",
+  "createdAt": "2026-04-01T00:00:00.000Z",
+  "updatedAt": "2026-05-01T00:00:00.000Z",
+  "data": {
+    "siteName": "Acme",
+    "tagline": "Build with Sawala"
+  }
+}
