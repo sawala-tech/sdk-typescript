@@ -3,6 +3,15 @@
   "version": "0.4.0",
   "description": "React components and headless hooks for embedding Sawala Formulir forms — drop-in for Next.js, Vite, Remix, and any React 18+ app.",
   "keywords": ["sawala", "sawala-tech", "sawala-cloud", "formulir", "react"],
+  "license": "MIT",
+  "author": "Sawala Cloud <hello@sawala.co> (https://sawala.co)",
+  "homepage": "https://github.com/sawala-tech/sdk-typescript/tree/main/packages/formulir-react",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sawala-tech/sdk-typescript.git",
+    "directory": "packages/formulir-react"
+  },
+  "bugs": "https://github.com/sawala-tech/sdk-typescript/issues",
   "private": false,
   "publishConfig": { "access": "public" },
   "type": "module",
@@ -30,9 +39,7 @@
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "tsup": "^8.0.0",
-    "typescript": "^5.0.0"
+    "react-dom": "^18.2.0"
   },
   "scripts": {
     "build": "tsup",
