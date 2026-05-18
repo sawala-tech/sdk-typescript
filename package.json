@@ -1,0 +1,32 @@
+{
+  "name": "sawala-sdk-typescript-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sawala's @sawala/* TypeScript SDK family — a monorepo of independently versioned packages.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "node scripts/each-workspace.mjs build",
+    "test": "node scripts/each-workspace.mjs test",
+    "typecheck": "node scripts/each-workspace.mjs typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
