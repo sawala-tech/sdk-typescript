@@ -2,15 +2,18 @@ import type {
   KontenaClientOptions,
   KontenaEntry,
   KontenaLocale,
+  KontenaPagination,
   KontenaSystemColumns,
+  ListCollectionParams,
 } from './types'
 
 /**
  * A typed client for Kontena's public read API.
  *
- * Created via {@link createKontenaClient}. v0.1 ships with one method
- * (`getSingle`) — additional methods (`listCollection`, `getCollectionEntry`,
- * locale-pair resolution) land in later minor releases as additive surface.
+ * Created via {@link createKontenaClient}. Single-type reads use
+ * {@link KontenaClient.getSingle}; collection (multi-entry) schemas use
+ * {@link KontenaClient.listCollection} for paginated lists and
+ * {@link KontenaClient.getCollectionEntry} to resolve one entry by slug.
  */
 export interface KontenaClient {
   /**
@@ -25,6 +28,44 @@ export interface KontenaClient {
    * settings?.siteName  // typed as string | undefined (entry may be null)
    */
   getSingle<T>(schemaSlug: string, locale: KontenaLocale): Promise<KontenaEntry<T> | null>
+
+  /**
+   * List entries from a collection-type schema, with cursor pagination and
+   * optional free-text search.
+   *
+   * Returns `{ items, pagination }`. A 404 (schema has no entries for the
+   * locale) resolves to an empty list rather than throwing; any other non-2xx
+   * response throws. Pass `params.q` to filter server-side, `params.cursor`
+   * (from a prior page's `pagination.nextCursor`) to page forward.
+   *
+   * @example
+   * interface Post { title: string; body: string }
+   * const { items, pagination } = await kontena.listCollection<Post>('post', { locale: 'id', limit: 10 })
+   * items[0]?.title
+   * if (pagination.hasMore) { /* fetch pagination.nextCursor *\/ }
+   */
+  listCollection<T>(
+    schemaSlug: string,
+    params?: ListCollectionParams,
+  ): Promise<{ items: Array<KontenaEntry<T>>; pagination: KontenaPagination }>
+
+  /**
+   * Resolve a single entry of a collection schema by its `slug` in the given
+   * locale. Returns `null` when no entry with that slug exists.
+   *
+   * The public read API addresses collection entries by id, not slug, so this
+   * fetches the first page (up to 100 entries) for the schema+locale and
+   * matches the slug client-side. Sufficient for typical site volumes; for
+   * very large collections prefer paging {@link KontenaClient.listCollection}.
+   *
+   * @example
+   * const post = await kontena.getCollectionEntry<Post>('post', 'hello-world', 'id')
+   */
+  getCollectionEntry<T>(
+    schemaSlug: string,
+    slug: string,
+    locale: KontenaLocale,
+  ): Promise<KontenaEntry<T> | null>
 }
 
 interface RawRow {
@@ -37,6 +78,11 @@ interface RawRow {
   publishedAt?: string
   createdAt?: string
   updatedAt?: string
+}
+
+interface RawCollectionResponse {
+  data: RawRow[]
+  meta: { pagination: KontenaPagination }
 }
 
 function unwrapRow<T>(row: RawRow | null | undefined): KontenaEntry<T> | null {
@@ -103,7 +149,7 @@ export function createKontenaClient(opts: KontenaClientOptions): KontenaClient {
     return (await res.json()) as R
   }
 
-  return {
+  const client: KontenaClient = {
     async getSingle<T>(
       schemaSlug: string,
       locale: KontenaLocale,
@@ -112,5 +158,40 @@ export function createKontenaClient(opts: KontenaClientOptions): KontenaClient {
       const row = await getJson<RawRow>(u)
       return unwrapRow<T>(row)
     },
+
+    async listCollection<T>(
+      schemaSlug: string,
+      params?: ListCollectionParams,
+    ): Promise<{ items: Array<KontenaEntry<T>>; pagination: KontenaPagination }> {
+      const u = url(`/content/collection/${schemaSlug}`, {
+        locale: params?.locale,
+        limit: params?.limit?.toString(),
+        cursor: params?.cursor,
+        fields: params?.fields?.join(','),
+        q: params?.q,
+      })
+      const json = await getJson<RawCollectionResponse>(u)
+      if (!json) {
+        return { items: [], pagination: { limit: params?.limit ?? 25, hasMore: false } }
+      }
+      const items = json.data
+        .map((r) => unwrapRow<T>(r))
+        .filter((x): x is KontenaEntry<T> => x !== null)
+      return { items, pagination: json.meta.pagination }
+    },
+
+    async getCollectionEntry<T>(
+      schemaSlug: string,
+      slug: string,
+      locale: KontenaLocale,
+    ): Promise<KontenaEntry<T> | null> {
+      // The public read API addresses collection entries by id, not slug, so
+      // we pull the first page (≤100) for this schema+locale and match the
+      // slug client-side. Fine until per-slug routing lands upstream.
+      const { items } = await client.listCollection<T>(schemaSlug, { locale, limit: 100 })
+      return items.find((entry) => entry._row.slug === slug) ?? null
+    },
   }
+
+  return client
 }
