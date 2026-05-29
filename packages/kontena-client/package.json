@@ -1,6 +1,6 @@
 {
   "name": "@sawala/kontena-client",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "TypeScript client for the Kontena public read API — Sawala Cloud's headless CMS. Framework-agnostic, runs in Node, browsers, and Cloudflare Workers.",
   "keywords": [
     "sawala",
