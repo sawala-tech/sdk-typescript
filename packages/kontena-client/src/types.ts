@@ -51,6 +51,44 @@ export interface KontenaSystemColumns {
 export type KontenaEntry<T> = T & { _row: KontenaSystemColumns }
 
 /**
+ * Cursor-based pagination metadata returned alongside a collection list.
+ * Kontena pages collections with an opaque cursor rather than offset/limit
+ * page numbers, so `nextCursor` is the only way to fetch the following page.
+ *
+ * @example
+ * const { items, pagination } = await kontena.listCollection<Post>('post', { limit: 10 })
+ * if (pagination.hasMore) {
+ *   const next = await kontena.listCollection<Post>('post', { limit: 10, cursor: pagination.nextCursor! })
+ * }
+ */
+export interface KontenaPagination {
+  /** The `limit` that was applied to this page. */
+  limit: number
+  /** The cursor that produced this page, if any (echoed back). */
+  cursor?: string
+  /** Whether a further page exists after this one. */
+  hasMore: boolean
+  /** Opaque cursor to pass as `cursor` to fetch the next page; `null`/absent when `hasMore` is false. */
+  nextCursor?: string | null
+}
+
+/**
+ * Parameters for {@link KontenaClient.listCollection}. All optional.
+ */
+export interface ListCollectionParams {
+  /** Locale to read (e.g. `'id'`). Omit to use the project default. */
+  locale?: KontenaLocale
+  /** Maximum rows to return for this page. */
+  limit?: number
+  /** Opaque pagination cursor from a prior page's {@link KontenaPagination.nextCursor}. */
+  cursor?: string
+  /** Restrict the returned `data` to these field names (sent as a CSV `fields` param). */
+  fields?: string[]
+  /** Free-text query — Kontena filters the collection server-side by this term. */
+  q?: string
+}
+
+/**
  * Options for {@link createKontenaClient}.
  */
 export interface KontenaClientOptions {

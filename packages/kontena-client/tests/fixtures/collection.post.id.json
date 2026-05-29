@@ -1,0 +1,39 @@
+{
+  "data": [
+    {
+      "id": "post_1",
+      "documentId": "doc_post_1",
+      "locale": "id",
+      "slug": "halo-dunia",
+      "status": "published",
+      "publishedAt": "2026-05-10T00:00:00.000Z",
+      "createdAt": "2026-05-10T00:00:00.000Z",
+      "updatedAt": "2026-05-10T00:00:00.000Z",
+      "data": {
+        "title": "Halo Dunia",
+        "body": "Tulisan pertama kami."
+      }
+    },
+    {
+      "id": "post_2",
+      "documentId": "doc_post_2",
+      "locale": "id",
+      "slug": "kabar-kedua",
+      "status": "published",
+      "publishedAt": "2026-05-12T00:00:00.000Z",
+      "createdAt": "2026-05-12T00:00:00.000Z",
+      "updatedAt": "2026-05-12T00:00:00.000Z",
+      "data": {
+        "title": "Kabar Kedua",
+        "body": "Tulisan kedua."
+      }
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "limit": 10,
+      "hasMore": true,
+      "nextCursor": "cursor_page_2"
+    }
+  }
+}

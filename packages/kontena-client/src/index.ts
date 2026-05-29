@@ -5,5 +5,7 @@ export type {
   KontenaEntry,
   KontenaLocale,
   KontenaLocaleHint,
+  KontenaPagination,
   KontenaSystemColumns,
+  ListCollectionParams,
 } from './types'

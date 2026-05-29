@@ -47,6 +47,30 @@ The publishable API key (`pk_live_…` / `pk_test_…`) is **read-only** and **s
 
 Fetches the single entry for a single-type schema in the given locale. Returns the entry as `T & { _row: KontenaSystemColumns }` — your user fields at the top level, system columns (id, slug, locale, status, timestamps) under `_row`. Returns `null` when the schema has no entry for that locale (404 from the backend); throws for any other non-2xx response.
 
+### `client.listCollection<T>(schemaSlug, params?)`
+
+Lists entries from a collection-type schema. Returns `{ items, pagination }` where `items` is `Array<T & { _row }>` and `pagination` is `{ limit, cursor?, hasMore, nextCursor? }`. A 404 (no entries for the locale) resolves to an empty list rather than throwing; any other non-2xx throws.
+
+`params` (all optional): `locale`, `limit`, `cursor` (opaque, from a prior page's `pagination.nextCursor`), `fields` (string[] — restricts returned fields), `q` (free-text search, filtered server-side).
+
+```ts
+interface Post { title: string; body: string }
+const { items, pagination } = await kontena.listCollection<Post>('post', { locale: 'id', limit: 10 })
+if (pagination.hasMore) {
+  const next = await kontena.listCollection<Post>('post', { limit: 10, cursor: pagination.nextCursor! })
+}
+// search:
+const hits = await kontena.listCollection<Post>('post', { locale: 'id', q: 'hello', limit: 20 })
+```
+
+### `client.getCollectionEntry<T>(schemaSlug, slug, locale)`
+
+Resolves one collection entry by its `slug` in the given locale, or `null` if none matches. The public read API addresses entries by id, so this fetches the first page (≤100 entries) and matches the slug client-side — sufficient for typical site volumes; for very large collections, page `listCollection` instead.
+
+```ts
+const post = await kontena.getCollectionEntry<Post>('post', 'hello-world', 'id')
+```
+
 ## Typing your locales
 
 `KontenaLocale` is `string` by default — any locale code your project uses works without ceremony. For autocomplete on a known fixed set, use `KontenaLocaleHint`:

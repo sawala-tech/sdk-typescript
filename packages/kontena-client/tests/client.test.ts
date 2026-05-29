@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { createKontenaClient } from '../src'
 import singleSiteSettings from './fixtures/single.site-settings.id.json'
+import collectionPost from './fixtures/collection.post.id.json'
 
 const BASE = 'https://api.sawala.cloud/public/kontena'
 const PROJ = 'proj_test123'
@@ -16,6 +17,12 @@ const server = setupServer(
   ),
   http.get(`${BASE}/projects/${PROJ}/content/single/error`, () =>
     HttpResponse.json({ error: 'kaboom' }, { status: 500 }),
+  ),
+  http.get(`${BASE}/projects/${PROJ}/content/collection/post`, () =>
+    HttpResponse.json(collectionPost),
+  ),
+  http.get(`${BASE}/projects/${PROJ}/content/collection/empty`, () =>
+    HttpResponse.json({}, { status: 404 }),
   ),
 )
 
@@ -81,5 +88,65 @@ describe('createKontenaClient', () => {
     await client.getSingle('peek', 'id')
     expect(receivedHeader).toBe('pk_live_REDACTED')
     expect(receivedFormat).toBe('strapi-v5')
+  })
+
+  it('listCollection unwraps rows and surfaces pagination', async () => {
+    interface Post {
+      title: string
+      body: string
+    }
+    const { items, pagination } = await client.listCollection<Post>('post', { locale: 'id', limit: 10 })
+    expect(items).toHaveLength(2)
+    expect(items[0]?.title).toBe('Halo Dunia')
+    expect(items[0]?._row.slug).toBe('halo-dunia')
+    expect(items[0]?._row.status).toBe('published')
+    expect(pagination.hasMore).toBe(true)
+    expect(pagination.nextCursor).toBe('cursor_page_2')
+  })
+
+  it('listCollection forwards locale, limit, cursor, fields, and q params', async () => {
+    let received: URLSearchParams | null = null
+    server.use(
+      http.get(`${BASE}/projects/${PROJ}/content/collection/peek`, ({ request }) => {
+        received = new URL(request.url).searchParams
+        return HttpResponse.json(collectionPost)
+      }),
+    )
+    await client.listCollection('peek', {
+      locale: 'en',
+      limit: 5,
+      cursor: 'cur_abc',
+      fields: ['title', 'slug'],
+      q: 'hello',
+    })
+    expect(received).not.toBeNull()
+    expect(received!.get('locale')).toBe('en')
+    expect(received!.get('limit')).toBe('5')
+    expect(received!.get('cursor')).toBe('cur_abc')
+    expect(received!.get('fields')).toBe('title,slug')
+    expect(received!.get('q')).toBe('hello')
+    expect(received!.get('format')).toBe('strapi-v5')
+  })
+
+  it('listCollection returns an empty list (not throw) for a 404 collection', async () => {
+    const { items, pagination } = await client.listCollection('empty', { limit: 7 })
+    expect(items).toEqual([])
+    expect(pagination.hasMore).toBe(false)
+    expect(pagination.limit).toBe(7)
+  })
+
+  it('getCollectionEntry resolves an entry by slug', async () => {
+    interface Post {
+      title: string
+    }
+    const entry = await client.getCollectionEntry<Post>('post', 'kabar-kedua', 'id')
+    expect(entry).not.toBeNull()
+    expect(entry?.title).toBe('Kabar Kedua')
+    expect(entry?._row.slug).toBe('kabar-kedua')
+  })
+
+  it('getCollectionEntry returns null when no slug matches', async () => {
+    const entry = await client.getCollectionEntry('post', 'does-not-exist', 'id')
+    expect(entry).toBeNull()
   })
 })
