@@ -16,7 +16,6 @@ Requires Node 18+ (for the built-in `fetch`).
 import { createKontenaClient } from '@sawala/kontena-client'
 
 const kontena = createKontenaClient({
-  baseUrl: 'https://api.sawala.cloud/public/kontena',
   projectId: 'proj_acme123',
   publicApiKey: 'pk_live_xxx', // get this from your Kontena project's API keys page
 })
@@ -30,6 +29,16 @@ const landing = await kontena.getSingle<Landing>('landing', 'id')
 console.log(landing?.hero)
 ```
 
+`baseUrl` is optional and defaults to Sawala's production public API; set it only to target staging, a preview, a local tunnel, or a self-hosted backend:
+
+```ts
+const staging = createKontenaClient({
+  baseUrl: 'https://api.staging.sawala.cloud/public/kontena',
+  projectId: 'proj_acme123',
+  publicApiKey: 'pk_test_xxx',
+})
+```
+
 The publishable API key (`pk_live_…` / `pk_test_…`) is **read-only** and **safe to embed in browser bundles** — it cannot write content, and it's rate-limited at the Kontena backend per project.
 
 ## API
@@ -38,7 +47,7 @@ The publishable API key (`pk_live_…` / `pk_test_…`) is **read-only** and **s
 
 | Option | Type | Description |
 | --- | --- | --- |
-| `baseUrl` | `string` | Base URL of the Kontena public API. |
+| `baseUrl` | `string` (optional) | Base URL of the Kontena public API. Defaults to Sawala's production public API (`https://api.sawala.cloud/public/kontena`); set it only to target a non-default environment (staging, preview, local tunnel, self-hosted). |
 | `projectId` | `string` | The Kontena project ID this client is scoped to. |
 | `publicApiKey` | `string` | Publishable read-only API key (`pk_live_…` or `pk_test_…`). |
 | `fetchImpl` | `typeof fetch` (optional) | Custom fetch (defaults to global `fetch`). |

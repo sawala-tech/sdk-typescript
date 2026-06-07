@@ -93,12 +93,15 @@ export interface ListCollectionParams {
  */
 export interface KontenaClientOptions {
   /**
-   * Base URL of the Kontena public API.
+   * Base URL of the Kontena public API. Optional — defaults to Sawala's
+   * production public API (`https://api.sawala.cloud/public/kontena`). Set this
+   * only to target a non-default environment (staging, preview, a local tunnel,
+   * or a self-hosted backend).
    *
    * @example
    * 'https://api.sawala.cloud/public/kontena'
    */
-  baseUrl: string
+  baseUrl?: string
 
   /**
    * The Kontena project ID this client is scoped to.
