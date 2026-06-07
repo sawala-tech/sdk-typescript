@@ -51,6 +51,27 @@ describe('createKontenaClient', () => {
     expect(entry?._row.id).toBe('ckpw5o8a40000xyz')
   })
 
+  it('defaults baseUrl to the production public API when none is given', async () => {
+    let requestedUrl: string | null = null
+    server.use(
+      http.get(`${BASE}/projects/${PROJ}/content/single/site-settings`, ({ request }) => {
+        requestedUrl = request.url
+        return HttpResponse.json(singleSiteSettings)
+      }),
+    )
+    // No baseUrl supplied — must fall back to https://api.sawala.cloud/public/kontena
+    const defaulted = createKontenaClient({
+      projectId: PROJ,
+      publicApiKey: 'pk_live_REDACTED',
+    })
+    const entry = await defaulted.getSingle('site-settings', 'id')
+    expect(entry).not.toBeNull()
+    expect(requestedUrl).not.toBeNull()
+    expect(requestedUrl!).toMatch(
+      /^https:\/\/api\.sawala\.cloud\/public\/kontena\/projects\/proj_test123\/content\/single\/site-settings/,
+    )
+  })
+
   it('returns null for missing single entries (404)', async () => {
     const entry = await client.getSingle('missing', 'id')
     expect(entry).toBeNull()

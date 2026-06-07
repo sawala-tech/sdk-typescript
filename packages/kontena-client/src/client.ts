@@ -8,6 +8,14 @@ import type {
 } from './types'
 
 /**
+ * Production base URL of the Kontena public read API. Used when a caller does
+ * not pass {@link KontenaClientOptions.baseUrl}. This host is a platform
+ * invariant for every managed-cloud customer and serves both `pk_test_…` and
+ * `pk_live_…` tokens; only `projectId` and `publicApiKey` differ per project.
+ */
+const DEFAULT_BASE_URL = 'https://api.sawala.cloud/public/kontena'
+
+/**
  * A typed client for Kontena's public read API.
  *
  * Created via {@link createKontenaClient}. Single-type reads use
@@ -111,11 +119,14 @@ function unwrapRow<T>(row: RawRow | null | undefined): KontenaEntry<T> | null {
  * the API's `{ id, locale, data: {...} }` row shape into a flat
  * `{ ...userFields, _row: {...systemColumns} }` consumers can read directly.
  *
+ * `baseUrl` is optional and defaults to Sawala's production public API; pass it
+ * only to target a non-default environment (staging, preview, local tunnel, or
+ * self-hosted backend).
+ *
  * @example
  * import { createKontenaClient } from '@sawala/kontena-client'
  *
  * const kontena = createKontenaClient({
- *   baseUrl: 'https://api.sawala.cloud/public/kontena',
  *   projectId: 'proj_acme123',
  *   publicApiKey: 'pk_live_xxx',
  * })
@@ -124,7 +135,7 @@ function unwrapRow<T>(row: RawRow | null | undefined): KontenaEntry<T> | null {
  * const landing = await kontena.getSingle<Landing>('landing', 'id')
  */
 export function createKontenaClient(opts: KontenaClientOptions): KontenaClient {
-  const base = opts.baseUrl.replace(/\/$/, '')
+  const base = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, '')
   const headers: HeadersInit = {
     'X-API-Key': opts.publicApiKey,
     accept: 'application/json',
