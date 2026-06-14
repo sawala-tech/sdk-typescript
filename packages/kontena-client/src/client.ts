@@ -134,8 +134,31 @@ function unwrapRow<T>(row: RawRow | null | undefined): KontenaEntry<T> | null {
  * interface Landing { hero: string; cta: string }
  * const landing = await kontena.getSingle<Landing>('landing', 'id')
  */
+// The API key travels in the X-API-Key header on every request. Even though
+// public (pk_) keys are browser-safe, a cleartext base would expose request and
+// response content on the network path, so require https — http is allowed only
+// for a local loopback host (local backend / tunnel dev).
+function assertSecureBaseUrl(base: string): void {
+  let parsed: URL
+  try {
+    parsed = new URL(base)
+  } catch {
+    throw new Error(`Invalid baseUrl: ${base}`)
+  }
+  const loopback =
+    parsed.hostname === 'localhost' ||
+    parsed.hostname === '127.0.0.1' ||
+    parsed.hostname === '::1' ||
+    parsed.hostname.endsWith('.localhost')
+  if (parsed.protocol === 'https:' || (parsed.protocol === 'http:' && loopback)) return
+  throw new Error(
+    `Refusing an insecure baseUrl (${base}). Use https:// — http:// is allowed only for localhost.`,
+  )
+}
+
 export function createKontenaClient(opts: KontenaClientOptions): KontenaClient {
   const base = (opts.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, '')
+  assertSecureBaseUrl(base)
   const headers: HeadersInit = {
     'X-API-Key': opts.publicApiKey,
     accept: 'application/json',

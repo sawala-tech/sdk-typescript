@@ -30,6 +30,23 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
+describe('createKontenaClient baseUrl security', () => {
+  it('rejects an insecure (http, non-localhost) baseUrl', () => {
+    expect(() =>
+      createKontenaClient({ baseUrl: 'http://evil.example.com', projectId: PROJ, publicApiKey: 'pk_live_x' }),
+    ).toThrow(/insecure baseUrl/i)
+  })
+
+  it('allows https and http-localhost', () => {
+    expect(() =>
+      createKontenaClient({ baseUrl: 'https://api.example.com', projectId: PROJ, publicApiKey: 'pk_live_x' }),
+    ).not.toThrow()
+    expect(() =>
+      createKontenaClient({ baseUrl: 'http://localhost:8787', projectId: PROJ, publicApiKey: 'pk_live_x' }),
+    ).not.toThrow()
+  })
+})
+
 describe('createKontenaClient', () => {
   const client = createKontenaClient({
     baseUrl: BASE,
