@@ -24,6 +24,23 @@ export interface FormulirProviderProps {
   children:    ReactNode
 }
 
+// True for https anywhere, or http only to a local loopback host.
+function isSecureBaseUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    if (u.protocol === 'https:') return true
+    return (
+      u.protocol === 'http:' &&
+      (u.hostname === 'localhost' ||
+        u.hostname === '127.0.0.1' ||
+        u.hostname === '::1' ||
+        u.hostname.endsWith('.localhost'))
+    )
+  } catch {
+    return false
+  }
+}
+
 export function FormulirProvider({
   apiKey,
   baseUrl = 'https://api.sawala.cloud/public/formulir',
@@ -31,6 +48,14 @@ export function FormulirProvider({
   locale,
   children,
 }: FormulirProviderProps) {
+  // Warn (rather than throw, to avoid breaking the host page) when pointed at a
+  // non-https base. The submit API key is public (pk_), and browsers already
+  // block mixed content on https pages, so this is a developer-time nudge.
+  if (!isSecureBaseUrl(baseUrl) && typeof console !== 'undefined') {
+    console.warn(
+      `[FormulirProvider] Insecure baseUrl "${baseUrl}". Use https:// (http:// only for localhost).`,
+    )
+  }
   return (
     <FormulirContext.Provider value={{ apiKey, baseUrl, appearance, locale }}>
       {children}
