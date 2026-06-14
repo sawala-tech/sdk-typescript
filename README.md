@@ -38,8 +38,6 @@ sdk-typescript/
   package.json               # workspaces: ["packages/*"]
 ```
 
-This shape matches the pattern used by [`anthropic-sdk-typescript`](https://github.com/anthropics/anthropic-sdk-typescript), [`cloudflare-typescript`](https://github.com/cloudflare/cloudflare-typescript), and [AWS SDK v3](https://github.com/aws/aws-sdk-js-v3): one repo for source, many independently-versioned npm packages.
-
 ## Contributing
 
 This repo is open for community contributions. Bugs, ideas, and PRs are welcome via the [issue tracker](https://github.com/sawala-tech/sdk-typescript/issues).
