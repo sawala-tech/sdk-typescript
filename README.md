@@ -7,8 +7,10 @@ This is the public monorepo for [Sawala Cloud](https://sawala.co)'s TypeScript S
 | Package | npm | Description |
 | --- | --- | --- |
 | [`@sawala/formulir-react`](./packages/formulir-react) | [![npm](https://img.shields.io/npm/v/@sawala/formulir-react.svg)](https://www.npmjs.com/package/@sawala/formulir-react) | React components and headless hooks for embedding Sawala Formulir forms. |
+| [`@sawala/kontena-client`](./packages/kontena-client) | [![npm](https://img.shields.io/npm/v/@sawala/kontena-client.svg)](https://www.npmjs.com/package/@sawala/kontena-client) | Framework-agnostic client for the Kontena public read API — Sawala's headless CMS. |
+| [`@sawala/datana-client`](./packages/datana-client) | [![npm](https://img.shields.io/npm/v/@sawala/datana-client.svg)](https://www.npmjs.com/package/@sawala/datana-client) | Framework-agnostic client for the Datana public read API — Sawala's structured-data platform. |
 
-More packages will appear here as they ship — `@sawala/kontena-client` (headless CMS read client) is queued.
+More packages will appear here as they ship.
 
 ## Install
 
@@ -26,6 +28,8 @@ Each package's own README has its quickstart, API reference, and per-framework e
 sdk-typescript/
   packages/
     formulir-react/          # @sawala/formulir-react
+    kontena-client/          # @sawala/kontena-client
+    datana-client/           # @sawala/datana-client
     ...future packages
   .changeset/                # per-package independent versioning
   .github/workflows/         # shared CI + release pipeline
