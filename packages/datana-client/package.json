@@ -1,6 +1,6 @@
 {
   "name": "@sawala/datana-client",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "TypeScript client for the Datana public read API — Sawala Cloud's structured-data platform. Framework-agnostic, runs in Node, browsers, and Cloudflare Workers.",
   "keywords": [
     "sawala",
