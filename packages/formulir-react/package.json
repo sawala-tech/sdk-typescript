@@ -1,6 +1,6 @@
 {
   "name": "@sawala/formulir-react",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "React components and headless hooks for embedding Sawala Formulir forms — drop-in for Next.js, Vite, Remix, and any React 18+ app.",
   "keywords": [
     "sawala",
