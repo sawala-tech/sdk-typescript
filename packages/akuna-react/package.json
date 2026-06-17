@@ -1,0 +1,62 @@
+{
+  "name": "@sawala/akuna-react",
+  "version": "0.1.0",
+  "description": "Drop-in membership UI for your website — bring your own Clerk app, add sign-up/sign-in and a synced member directory with one Sawala API key and no backend.",
+  "keywords": [
+    "sawala",
+    "sawala-tech",
+    "sawala-cloud",
+    "akuna",
+    "membership",
+    "clerk",
+    "react"
+  ],
+  "license": "MIT",
+  "author": "Sawala Cloud <hello@sawala.co> (https://sawala.co)",
+  "homepage": "https://github.com/sawala-tech/sdk-typescript/tree/main/packages/akuna-react",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sawala-tech/sdk-typescript.git",
+    "directory": "packages/akuna-react"
+  },
+  "bugs": "https://github.com/sawala-tech/sdk-typescript/issues",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "peerDependencies": {
+    "@clerk/clerk-react": ">=5.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@clerk/clerk-react": "^5.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "verify-bundle": "node -e \"const fs=require('fs'),src=fs.readFileSync('src/index.ts','utf8'),dist=fs.readFileSync('dist/index.js','utf8');for (const m of ['MembershipProvider','useMember']) { if (src.includes(m) && !dist.includes(m)) { console.error('publish guard: dist/ is missing marker present in src/:', m); process.exit(1); } }\"",
+    "prepublishOnly": "npm run build && npm run verify-bundle"
+  }
+}
