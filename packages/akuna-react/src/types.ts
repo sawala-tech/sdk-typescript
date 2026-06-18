@@ -9,6 +9,8 @@ export interface AkunaConfig {
   clerkInstanceDomain: string
   appearance: AkunaAppearance | null
   signUpEnabled: boolean
+  /** True when the connected Clerk instance has the Organizations feature on. */
+  organizationsEnabled: boolean
 }
 
 export interface AkunaError {
