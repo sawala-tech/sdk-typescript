@@ -1,6 +1,6 @@
 {
   "name": "@sawala/akuna-react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Drop-in membership UI for your website — bring your own Clerk app, add sign-up/sign-in and a synced member directory with one Sawala API key and no backend.",
   "keywords": [
     "sawala",
