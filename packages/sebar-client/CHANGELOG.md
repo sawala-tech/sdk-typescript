@@ -1,5 +1,11 @@
 # @sawala/sebar-client
 
+## 0.1.1
+
+### Patch Changes
+
+- ecccc46: Remove the Cloudflare Workers mention from the README and package description. The client depends only on the Web `fetch` API and runs on any server runtime (Node, a Next.js Server Action / Route Handler, or an app deployed on Kodena); the docs no longer single out a specific Workers platform.
+
 ## 0.1.0
 
 ### Minor Changes
