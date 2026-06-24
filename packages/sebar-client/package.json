@@ -1,0 +1,53 @@
+{
+  "name": "@sawala/sebar-client",
+  "version": "0.1.0",
+  "description": "Server-side TypeScript client for Sebar — Sawala Cloud's email send API. Authenticates with a secret key; runs on Node and Cloudflare Workers, never the browser.",
+  "keywords": [
+    "sawala",
+    "sawala-tech",
+    "sawala-cloud",
+    "sebar",
+    "email",
+    "transactional",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": "Sawala Cloud <hello@sawala.co> (https://sawala.co)",
+  "homepage": "https://github.com/sawala-tech/sdk-typescript/tree/main/packages/sebar-client",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sawala-tech/sdk-typescript.git",
+    "directory": "packages/sebar-client"
+  },
+  "bugs": "https://github.com/sawala-tech/sdk-typescript/issues",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}
