@@ -40,12 +40,12 @@ Instead of a `templateId`, you can send an inline message by providing a
       bodyHtml: '<p>Hi there</p>',
     })
 
-### Next.js (Server Action / Route Handler) and Cloudflare Workers / Kodena
+### Next.js (Server Action / Route Handler) and Kodena
 
 The client depends only on the Web `fetch` API, so it runs in any server
-runtime — Node, a Next.js Server Action, a Route Handler, or a Cloudflare
-Worker (including apps deployed on Kodena). Construct it inside server code and
-read the key from a server-only env var:
+runtime — Node, a Next.js Server Action, a Route Handler, or an app deployed on
+Kodena. Construct it inside server code and read the key from a server-only env
+var:
 
     'use server'
     import { createSebarClient } from '@sawala/sebar-client'

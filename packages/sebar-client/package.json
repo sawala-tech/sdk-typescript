@@ -1,7 +1,7 @@
 {
   "name": "@sawala/sebar-client",
   "version": "0.1.0",
-  "description": "Server-side TypeScript client for Sebar — Sawala Cloud's email send API. Authenticates with a secret key; runs on Node and Cloudflare Workers, never the browser.",
+  "description": "Server-side TypeScript client for Sebar — Sawala Cloud's email send API. Authenticates with a secret key; runs on any server runtime, never the browser.",
   "keywords": [
     "sawala",
     "sawala-tech",
