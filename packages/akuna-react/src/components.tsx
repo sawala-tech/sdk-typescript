@@ -107,6 +107,10 @@ export function AkunaUserButton({ className }: AkunaUserButtonProps) {
   const { config } = useMembershipConfig()
   const { member, isSignedIn, signOut, manageAccountUrl, refresh } = useMemberContext()
   const [open, setOpen] = useState(false)
+  // Edge-aware menu alignment: right-align to the avatar by default, but when
+  // the avatar sits near the left viewport edge a right-anchored menu would
+  // hang off-screen — flip to left-aligned.
+  const [alignLeft, setAlignLeft] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const pollRef = useRef<number | null>(null)
 
@@ -179,7 +183,11 @@ export function AkunaUserButton({ className }: AkunaUserButtonProps) {
         type="button"
         aria-label="Account"
         className={className}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          const rect = rootRef.current?.getBoundingClientRect()
+          setAlignLeft(Boolean(rect && rect.left < 200))
+          setOpen((v) => !v)
+        }}
         style={{
           width: 36,
           height: 36,
@@ -211,7 +219,7 @@ export function AkunaUserButton({ className }: AkunaUserButtonProps) {
           role="menu"
           style={{
             position: 'absolute',
-            right: 0,
+            ...(alignLeft ? { left: 0 } : { right: 0 }),
             top: 'calc(100% + 6px)',
             minWidth: 180,
             background: '#fff',
