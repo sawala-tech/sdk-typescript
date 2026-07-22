@@ -104,6 +104,11 @@ single-class selectors, so your CSS always wins without `!important`:
     .akui-menu-email
     .akui-menu-item    /* Manage account / Sign out rows */
 
+The components default to the system font (so they look right even on an
+unstyled page). To use your site's font everywhere, set one variable:
+
+    :root { --akui-font: 'Inter', ui-sans-serif, sans-serif; }
+
 Example — brand the button and menu:
 
     .akui-signin-btn { background: #4c6ef5; border-radius: 999px; }

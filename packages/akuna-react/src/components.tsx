@@ -16,22 +16,22 @@ import { useMembershipConfig } from './provider'
 // Clerk's components in BYO mode.
 const STYLE_ID = 'akuna-react-styles'
 const AKUNA_CSS = `
-.akui-signin-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1.25rem;border:0;border-radius:8px;cursor:pointer;background:#111827;color:#fff;font-family:inherit;font-size:.95rem;font-weight:600;line-height:1.2;transition:background .15s ease,transform .15s ease,box-shadow .15s ease}
+.akui-signin-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1.25rem;border:0;border-radius:8px;cursor:pointer;background:#111827;color:#fff;font-family:var(--akui-font,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif);font-size:.95rem;font-weight:600;line-height:1.2;transition:background .15s ease,transform .15s ease,box-shadow .15s ease}
 .akui-signin-btn:hover{background:#1f2937;transform:translateY(-1px);box-shadow:0 4px 12px rgba(17,24,39,.25)}
 .akui-signin-btn:active{transform:translateY(0);box-shadow:none}
 .akui-signin-btn:focus-visible{outline:2px solid #6366f1;outline-offset:2px}
-.akui-avatar-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(0,0,0,.08);padding:0;overflow:hidden;cursor:pointer;background:#e5e7eb;color:#374151;font-family:inherit;font-size:.8rem;font-weight:600;line-height:34px;text-align:center;transition:box-shadow .15s ease}
+.akui-avatar-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(0,0,0,.08);padding:0;overflow:hidden;cursor:pointer;background:#e5e7eb;color:#374151;font-family:var(--akui-font,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif);font-size:.8rem;font-weight:600;line-height:34px;text-align:center;transition:box-shadow .15s ease}
 .akui-avatar-btn:hover{box-shadow:0 0 0 3px rgba(99,102,241,.25)}
 .akui-avatar-btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(99,102,241,.5)}
 .akui-avatar-img{width:100%;height:100%;object-fit:cover;display:block}
-.akui-menu{position:absolute;top:calc(100% + 8px);min-width:230px;background:#fff;color:#111827;border:1px solid rgba(0,0,0,.06);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);padding:.375rem;z-index:50;font-family:inherit;animation:akui-pop .13s ease}
+.akui-menu{position:absolute;top:calc(100% + 8px);min-width:230px;background:#fff;color:#111827;border:1px solid rgba(0,0,0,.06);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);padding:.375rem;z-index:50;font-family:var(--akui-font,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif);animation:akui-pop .13s ease}
 .akui-menu--right{right:0}
 .akui-menu--left{left:0}
 @keyframes akui-pop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
 .akui-menu-header{padding:.5rem .625rem .625rem;border-bottom:1px solid rgba(0,0,0,.06);margin-bottom:.25rem}
 .akui-menu-name{font-size:.85rem;font-weight:600}
 .akui-menu-email{font-size:.75rem;color:#6b7280;margin-top:1px}
-.akui-menu-item{display:flex;align-items:center;gap:.55rem;width:100%;padding:.5rem .625rem;border:0;border-radius:8px;background:transparent;text-align:left;font-family:inherit;font-size:.875rem;cursor:pointer;color:inherit;transition:background .12s ease}
+.akui-menu-item{display:flex;align-items:center;gap:.55rem;width:100%;padding:.5rem .625rem;border:0;border-radius:8px;background:transparent;text-align:left;font-family:var(--akui-font,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif);font-size:.875rem;cursor:pointer;color:inherit;transition:background .12s ease}
 .akui-menu-item:hover{background:rgba(0,0,0,.05)}
 .akui-menu-item svg{width:15px;height:15px;opacity:.55;flex:none}
 @media (prefers-color-scheme:dark){
