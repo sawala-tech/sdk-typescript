@@ -1,13 +1,16 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { ClerkProvider } from '@clerk/clerk-react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { ClerkProvider, useClerk, useUser } from '@clerk/clerk-react'
 import { fetchConfig } from './api'
+import { ManagedMemberProvider } from './managed'
+import { MemberContext, type MemberContextValue } from './memberContext'
 import type { AkunaConfig, AkunaError } from './types'
 
 interface MembershipContextValue {
   config: AkunaConfig
   baseUrl: string
+  apiKey: string
 }
 
 const MembershipContext = createContext<MembershipContextValue | null>(null)
@@ -40,10 +43,46 @@ function isSecureBaseUrl(url: string): boolean {
   }
 }
 
+// BYO: rendered UNDER <ClerkProvider>, maps Clerk's live session into the
+// unified MemberContext so consumers never call Clerk hooks (which would throw
+// in managed mode, where no ClerkProvider exists).
+function ClerkMemberBridge({ children }: { children: ReactNode }) {
+  const { user, isLoaded, isSignedIn } = useUser()
+  const clerk = useClerk()
+
+  const value = useMemo<MemberContextValue>(
+    () => ({
+      member: user
+        ? {
+            id: user.id,
+            email: user.primaryEmailAddress?.emailAddress ?? null,
+            name: user.fullName ?? user.username ?? null,
+            imageUrl: user.imageUrl ?? null,
+          }
+        : null,
+      isLoaded,
+      isSignedIn: Boolean(isSignedIn),
+      signIn: () => {
+        void clerk.openSignIn({})
+      },
+      signOut: () => clerk.signOut(),
+      manageAccountUrl: null,
+      refresh: () => Promise.resolve(),
+    }),
+    [user, isLoaded, isSignedIn, clerk],
+  )
+
+  return <MemberContext.Provider value={value}>{children}</MemberContext.Provider>
+}
+
 /**
- * Boots Clerk for the customer's site using ONLY a Sawala project API key.
- * On mount it fetches the connection's public config from the gateway and then
- * renders Clerk's <ClerkProvider> with the returned publishable key + appearance.
+ * Boots membership for the customer's site using ONLY a Sawala project API key.
+ * On mount it fetches the connection's public config from the gateway, then
+ * branches on the returned `mode`:
+ *  - `byo`     → renders Clerk's <ClerkProvider> with the customer's own
+ *                publishable key (the pre-0.4 behavior).
+ *  - `managed` → renders the "Sign in with Sawala" session engine. No Clerk
+ *                code runs on the page and no Clerk key is ever exposed.
  * The customer never hardcodes or hosts any Clerk key — it comes from Sawala.
  */
 export function MembershipProvider({
@@ -81,17 +120,31 @@ export function MembershipProvider({
   if (error) return <>{errorFallback ? errorFallback(error) : null}</>
   if (!config) return <>{loadingFallback}</>
 
+  const ctx: MembershipContextValue = { config, baseUrl, apiKey }
+
+  if (config.mode === 'managed') {
+    return (
+      <MembershipContext.Provider value={ctx}>
+        <ManagedMemberProvider apiKey={apiKey} baseUrl={baseUrl} config={config}>
+          {children}
+        </ManagedMemberProvider>
+      </MembershipContext.Provider>
+    )
+  }
+
   return (
     <ClerkProvider
       publishableKey={config.clerkPublishableKey}
       appearance={config.appearance ?? undefined}
     >
-      <MembershipContext.Provider value={{ config, baseUrl }}>{children}</MembershipContext.Provider>
+      <MembershipContext.Provider value={ctx}>
+        <ClerkMemberBridge>{children}</ClerkMemberBridge>
+      </MembershipContext.Provider>
     </ClerkProvider>
   )
 }
 
-/** Access the resolved Akuna config (publishable key, instance, appearance, flags). */
+/** Access the resolved Akuna config (mode, keys/urls, appearance, flags). */
 export function useMembershipConfig(): MembershipContextValue {
   const ctx = useContext(MembershipContext)
   if (!ctx) {
@@ -99,3 +152,4 @@ export function useMembershipConfig(): MembershipContextValue {
   }
   return ctx
 }
+
