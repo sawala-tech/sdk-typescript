@@ -1,9 +1,13 @@
 // Thin fetch helper for the public Akuna API. Browser-only — modern React
 // targets (Next.js, Vite, Remix, plain CDN) all have global fetch.
+//
+// Header convention (load-bearing, fixed by the platform): the Sawala api key
+// ALWAYS travels in `x-api-key`; `Authorization: Bearer` is reserved for the
+// managed member session JWT. One request may carry both.
 
-import type { AkunaConfig, AkunaError } from './types'
+import type { AkunaConfig, AkunaError, Member } from './types'
 
-interface ApiContext {
+export interface ApiContext {
   apiKey: string
   baseUrl: string
 }
@@ -44,5 +48,53 @@ export async function fetchConfig(ctx: ApiContext): Promise<AkunaConfig> {
     headers: { accept: 'application/json', 'x-api-key': ctx.apiKey },
   })
   if (!res.ok) throw await parseError(res)
-  return res.json() as Promise<AkunaConfig>
+  const body = (await res.json()) as AkunaConfig & { mode?: 'managed' | 'byo' }
+  // Backends that predate the managed flow return the BYO shape with no `mode`.
+  if (body.mode !== 'managed' && body.mode !== 'byo') {
+    return { ...(body as object), mode: 'byo' } as AkunaConfig
+  }
+  return body
+}
+
+/**
+ * Managed flow: exchange the single-use authorization code (from the
+ * ?code=… redirect) for a short-lived member session JWT plus the profile.
+ */
+export async function exchangeToken(
+  ctx: ApiContext,
+  code: string,
+): Promise<{ token: string; member: Member }> {
+  const res = await fetch(`${ctx.baseUrl}/auth/token`, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+      'x-api-key': ctx.apiKey,
+    },
+    body: JSON.stringify({ code }),
+  })
+  if (!res.ok) throw await parseError(res)
+  return res.json() as Promise<{ token: string; member: Member }>
+}
+
+/**
+ * Managed flow: verify the stored member session JWT and return the current
+ * membership. Returns null on 401 (missing/expired/revoked/banned) so callers
+ * can treat it as an ordinary signed-out state rather than an error.
+ */
+export async function fetchMe(
+  ctx: ApiContext,
+  token: string,
+): Promise<{ isMember: boolean; member: Member } | null> {
+  const res = await fetch(`${ctx.baseUrl}/auth/me`, {
+    method: 'GET',
+    headers: {
+      accept: 'application/json',
+      'x-api-key': ctx.apiKey,
+      authorization: `Bearer ${token}`,
+    },
+  })
+  if (res.status === 401) return null
+  if (!res.ok) throw await parseError(res)
+  return res.json() as Promise<{ isMember: boolean; member: Member }>
 }

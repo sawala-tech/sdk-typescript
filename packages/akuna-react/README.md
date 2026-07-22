@@ -1,28 +1,33 @@
 # @sawala/akuna-react
 
-Drop-in **membership UI** for your website. Bring your own Clerk application,
-add `<MembershipProvider>` + Clerk's sign-up/sign-in components with **one Sawala
-project API key**, and every member who registers is mirrored into a Sawala
-member directory — **no backend to write or host**.
+Drop-in **membership UI** for your website with **one Sawala project API key**
+and **no backend to write or host**. The same JSX works for both membership
+modes — the package detects the mode at runtime:
 
-The customer never hardcodes a Clerk key in their site. `<MembershipProvider>`
-fetches the connection's public config (publishable key + appearance) from the
-Sawala gateway using only the API key, then boots Clerk.
+- **Managed — "Sign in with Sawala"** (zero config): Sawala hosts identity.
+  Your page shows a "Sign in with Sawala" button; visitors sign in on
+  `akuna.sawala.cloud` and return as members. **No Clerk account, no Clerk
+  keys, nothing to configure.**
+- **BYO Clerk** (advanced): connect your own Clerk application in the Sawala
+  dashboard and the same components render *your* branded Clerk UI instead.
+
+Switching a project between modes requires **no frontend change**.
 
 ## Install
 
     npm install @sawala/akuna-react @clerk/clerk-react react react-dom
 
-`@clerk/clerk-react`, `react`, and `react-dom` are peer dependencies.
+`@clerk/clerk-react`, `react`, and `react-dom` are peer dependencies (Clerk
+code only runs in BYO mode, but the import must resolve).
 
-## Usage
+## Usage — identical for both modes
 
     import {
       MembershipProvider,
       SignedIn,
       SignedOut,
-      SignIn,
-      UserButton,
+      AkunaSignIn,
+      AkunaUserButton,
       useMember,
     } from '@sawala/akuna-react'
 
@@ -30,10 +35,10 @@ Sawala gateway using only the API key, then boots Clerk.
       return (
         <MembershipProvider apiKey="pk_live_…">
           <SignedOut>
-            <SignIn routing="hash" />
+            <AkunaSignIn />
           </SignedOut>
           <SignedIn>
-            <UserButton />
+            <AkunaUserButton />
             <Profile />
           </SignedIn>
         </MembershipProvider>
@@ -48,7 +53,40 @@ Sawala gateway using only the API key, then boots Clerk.
 
 `apiKey` is a Sawala **project-scoped public key** (`pk_live_…` / `pk_test_…`)
 scoped for the `akuna` product — mint it in the Sawala dashboard under
-Settings → API keys.
+Settings → API keys. For managed mode, also add your page URL to the
+connection's **allowed redirect URIs** and the key's **allowed origins**
+(origins have no trailing slash: `https://mysite.com`, not `https://mysite.com/`).
+
+### What each component renders
+
+| Export | Managed | BYO |
+|---|---|---|
+| `<AkunaSignIn>` | "Sign in with Sawala" button → hosted login | Your Clerk `<SignIn>` (pass `byoProps`) |
+| `<AkunaUserButton>` | Avatar menu: **Manage account** (Sawala account window: photo, name, password) + **Sign out** | Clerk's `<UserButton>` |
+| `<SignedIn>` / `<SignedOut>` | Gate on the Sawala member session | Gate on the Clerk session |
+| `useMember()` | From `GET /auth/me` | From the live Clerk session |
+
+Managed "Manage account" opens Sawala's hosted account page in a small popup
+window; when it closes, the member state refreshes automatically so a changed
+name or photo appears immediately.
+
+### `useMember()`
+
+    const { member, isLoaded, isSignedIn, signIn, signOut } = useMember()
+
+- `member` — `{ id, email, name, imageUrl }` or `null`.
+- `signIn(opts?)` — managed: redirects to the Sawala login host (optional
+  `{ redirectUri }` override, must be allowlisted); BYO: opens Clerk sign-in.
+- `signOut()` — managed: signs out of **this site** (the visitor's Sawala
+  account stays signed in, like a Google account); BYO: ends the Clerk session.
+
+### Managed-mode session notes
+
+The member session is a short-lived token issued by Sawala and stored in
+`localStorage` (namespaced per API key). It is page-readable by design — the
+standard SPA bearer-token posture; it expires on its own and is scoped
+server-side to this one project. When it expires, `useMember()` reports
+signed-out; clicking sign-in again is instant (no re-consent).
 
 ### Options
 
@@ -60,14 +98,15 @@ Settings → API keys.
 - `loadingFallback` — rendered while the config is fetched.
 - `errorFallback` — `(error) => ReactNode`, rendered if the config fetch fails.
 
-### Exports
+### BYO-only escape hatches
 
-`MembershipProvider`, `useMembershipConfig`, `useMember`, and the re-exported
-Clerk components `SignIn`, `SignUp`, `UserButton`, `SignedIn`, `SignedOut`,
-`RedirectToSignIn`.
+These render your own Clerk instance and are **not available in managed mode**:
+`SignIn`, `SignUp`, `UserButton`, `UserProfile`, `RedirectToSignIn`,
+`OrganizationSwitcher`, `OrganizationProfile`, `CreateOrganization`,
+`useMemberOrganization`, `useMemberOrganizationList`. Prefer the mode-aware
+components above for code that must serve both modes.
 
 ## Example
 
-See `example/` for a minimal Vite app that mounts `<MembershipProvider>` +
-`<SignUp>` and completes a real registration against a Clerk dev instance using
-only an API key.
+See `example/` for a minimal Vite app that mounts `<MembershipProvider>` and
+completes a real sign-in using only an API key.
