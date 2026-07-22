@@ -108,9 +108,14 @@ export function ManagedMemberProvider({ apiKey, baseUrl, config, children }: Man
   }, [ctx, tokenKey])
 
   useEffect(() => {
+    // Exactly-once boot, StrictMode-safe: the ref survives StrictMode's
+    // dev-only unmount/remount cycle, so the second effect run must NOT be
+    // treated as a cancellation — the single in-flight boot() finishes and
+    // publishes state to the (re)mounted component. No `cancelled` flag: a
+    // set-state after a real unmount is a no-op in React 18, while skipping
+    // setIsLoaded here would leave the UI blank forever.
     if (bootedRef.current) return
     bootedRef.current = true
-    let cancelled = false
 
     async function boot() {
       if (typeof window !== 'undefined') {
@@ -142,13 +147,10 @@ export function ManagedMemberProvider({ apiKey, baseUrl, config, children }: Man
         }
       }
       await refresh()
-      if (!cancelled) setIsLoaded(true)
+      setIsLoaded(true)
     }
 
     void boot()
-    return () => {
-      cancelled = true
-    }
   }, [ctx, refresh, stateKey, tokenKey])
 
   const signIn = useCallback(
