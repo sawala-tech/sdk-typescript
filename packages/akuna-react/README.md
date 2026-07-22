@@ -88,6 +88,34 @@ standard SPA bearer-token posture; it expires on its own and is scoped
 server-side to this one project. When it expires, `useMember()` reports
 signed-out; clicking sign-in again is instant (no re-consent).
 
+### Styling & theming (managed mode)
+
+The managed components ship with a small built-in look (light + dark) and a
+**stable class-name contract** — override any of it with plain CSS. The
+built-in stylesheet is injected *before* your own stylesheets and uses
+single-class selectors, so your CSS always wins without `!important`:
+
+    .akui-signin-btn   /* the "Sign in with Sawala" button */
+    .akui-avatar-btn   /* the avatar button */
+    .akui-avatar-img   /* the avatar image */
+    .akui-menu         /* the dropdown (also .akui-menu--left / --right) */
+    .akui-menu-header  /* name/email block */
+    .akui-menu-name
+    .akui-menu-email
+    .akui-menu-item    /* Manage account / Sign out rows */
+
+Example — brand the button and menu:
+
+    .akui-signin-btn { background: #4c6ef5; border-radius: 999px; }
+    .akui-signin-btn:hover { background: #3b5bdb; }
+    .akui-menu { border-radius: 8px; min-width: 260px; }
+
+To discard the default styling entirely, pass `className` to
+`<AkunaSignIn className="my-btn">` / `<AkunaUserButton className="my-avatar">`
+— it **replaces** the default class (Tailwind, CSS modules, shadcn tokens all
+work). In BYO mode, styling comes from your Clerk instance's `appearance`
+config as before.
+
 ### Options
 
 `<MembershipProvider>` props:

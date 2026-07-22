@@ -10,6 +10,69 @@ import { useMembershipConfig } from './provider'
 // `mode` from the boot config. BYO renders the customer's own Clerk UI;
 // managed renders Sawala-owned equivalents over the redirect flow.
 
+// Managed-mode styling: one small stylesheet injected once. Dependency-free,
+// inherits the host page's font, includes hover/focus states, a menu entrance
+// animation, and dark-mode support — so the managed UI holds its own next to
+// Clerk's components in BYO mode.
+const STYLE_ID = 'akuna-react-styles'
+const AKUNA_CSS = `
+.akui-signin-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1.25rem;border:0;border-radius:8px;cursor:pointer;background:#111827;color:#fff;font-family:inherit;font-size:.95rem;font-weight:600;line-height:1.2;transition:background .15s ease,transform .15s ease,box-shadow .15s ease}
+.akui-signin-btn:hover{background:#1f2937;transform:translateY(-1px);box-shadow:0 4px 12px rgba(17,24,39,.25)}
+.akui-signin-btn:active{transform:translateY(0);box-shadow:none}
+.akui-signin-btn:focus-visible{outline:2px solid #6366f1;outline-offset:2px}
+.akui-avatar-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(0,0,0,.08);padding:0;overflow:hidden;cursor:pointer;background:#e5e7eb;color:#374151;font-family:inherit;font-size:.8rem;font-weight:600;line-height:34px;text-align:center;transition:box-shadow .15s ease}
+.akui-avatar-btn:hover{box-shadow:0 0 0 3px rgba(99,102,241,.25)}
+.akui-avatar-btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(99,102,241,.5)}
+.akui-avatar-img{width:100%;height:100%;object-fit:cover;display:block}
+.akui-menu{position:absolute;top:calc(100% + 8px);min-width:230px;background:#fff;color:#111827;border:1px solid rgba(0,0,0,.06);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);padding:.375rem;z-index:50;font-family:inherit;animation:akui-pop .13s ease}
+.akui-menu--right{right:0}
+.akui-menu--left{left:0}
+@keyframes akui-pop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+.akui-menu-header{padding:.5rem .625rem .625rem;border-bottom:1px solid rgba(0,0,0,.06);margin-bottom:.25rem}
+.akui-menu-name{font-size:.85rem;font-weight:600}
+.akui-menu-email{font-size:.75rem;color:#6b7280;margin-top:1px}
+.akui-menu-item{display:flex;align-items:center;gap:.55rem;width:100%;padding:.5rem .625rem;border:0;border-radius:8px;background:transparent;text-align:left;font-family:inherit;font-size:.875rem;cursor:pointer;color:inherit;transition:background .12s ease}
+.akui-menu-item:hover{background:rgba(0,0,0,.05)}
+.akui-menu-item svg{width:15px;height:15px;opacity:.55;flex:none}
+@media (prefers-color-scheme:dark){
+  .akui-signin-btn{background:#f9fafb;color:#111827}
+  .akui-signin-btn:hover{background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+  .akui-avatar-btn{border-color:rgba(255,255,255,.12);background:#374151;color:#e5e7eb}
+  .akui-menu{background:#16181d;color:#e5e7eb;border-color:rgba(255,255,255,.08);box-shadow:0 12px 32px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.3)}
+  .akui-menu-header{border-bottom-color:rgba(255,255,255,.08)}
+  .akui-menu-email{color:#9ca3af}
+  .akui-menu-item:hover{background:rgba(255,255,255,.07)}
+}
+`
+
+function ensureStyles(): void {
+  if (typeof document === 'undefined') return
+  if (document.getElementById(STYLE_ID)) return
+  const el = document.createElement('style')
+  el.id = STYLE_ID
+  el.textContent = AKUNA_CSS
+  // Insert FIRST in <head>: the akui-* classes are a public theming contract —
+  // single-class selectors injected before any customer stylesheet, so the
+  // customer's own CSS (same specificity, later in the cascade) always wins.
+  document.head.insertBefore(el, document.head.firstChild)
+}
+
+function PersonIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 1.5c-2.7 0-5.5 1.35-5.5 3.25V14h11v-1.25C13.5 10.85 10.7 9.5 8 9.5Z" />
+    </svg>
+  )
+}
+
+function SignOutIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <path d="M6 2H3.5A1.5 1.5 0 0 0 2 3.5v9A1.5 1.5 0 0 0 3.5 14H6M10.5 11l3-3-3-3M13.5 8H6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 /** Gate: renders children only when the visitor is a signed-in member. */
 export function SignedIn({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn } = useMemberContext()
@@ -27,7 +90,7 @@ export function SignedOut({ children }: { children: ReactNode }) {
 export interface AkunaSignInProps {
   /** Managed mode: the button label. Default "Sign in with Sawala". */
   label?: string
-  /** Managed mode: extra class for the button. */
+  /** Managed mode: replace the default button styling with your own class. */
   className?: string
   /** Managed mode: override the URL the visitor returns to (must be allowlisted). */
   redirectUri?: string
@@ -48,25 +111,12 @@ export function AkunaSignIn({ label, className, redirectUri, byoProps }: AkunaSi
     return <ClerkSignIn {...byoProps} />
   }
 
+  ensureStyles()
   return (
     <button
       type="button"
-      className={className}
+      className={className ?? 'akui-signin-btn'}
       onClick={() => signIn(redirectUri ? { redirectUri } : undefined)}
-      style={
-        className
-          ? undefined
-          : {
-              padding: '0.6rem 1.2rem',
-              border: 0,
-              borderRadius: 8,
-              cursor: 'pointer',
-              background: '#111827',
-              color: '#fff',
-              fontSize: '0.95rem',
-              fontWeight: 600,
-            }
-      }
     >
       {label ?? 'Sign in with Sawala'}
     </button>
@@ -92,7 +142,7 @@ function openPortalPopup(url: string): Window | null {
 }
 
 export interface AkunaUserButtonProps {
-  /** Managed mode: extra class for the avatar button. */
+  /** Managed mode: replace the default avatar styling with your own class. */
   className?: string
 }
 
@@ -140,6 +190,8 @@ export function AkunaUserButton({ className }: AkunaUserButtonProps) {
 
   if (!isSignedIn || !member) return null
 
+  ensureStyles()
+
   const initials = (member.name ?? member.email ?? '?')
     .split(/\s+/)
     .map((p) => p[0])
@@ -165,89 +217,46 @@ export function AkunaUserButton({ className }: AkunaUserButtonProps) {
     }
   }
 
-  const itemStyle: React.CSSProperties = {
-    display: 'block',
-    width: '100%',
-    padding: '0.5rem 0.9rem',
-    border: 0,
-    background: 'transparent',
-    textAlign: 'left',
-    fontSize: '0.9rem',
-    cursor: 'pointer',
-    color: 'inherit',
-  }
-
   return (
     <div ref={rootRef} style={{ position: 'relative', display: 'inline-block' }}>
       <button
         type="button"
         aria-label="Account"
-        className={className}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={className ?? 'akui-avatar-btn'}
         onClick={() => {
           const rect = rootRef.current?.getBoundingClientRect()
           setAlignLeft(Boolean(rect && rect.left < 200))
           setOpen((v) => !v)
         }}
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: '50%',
-          border: '1px solid rgba(0,0,0,0.1)',
-          padding: 0,
-          overflow: 'hidden',
-          cursor: 'pointer',
-          background: '#e5e7eb',
-          color: '#374151',
-          fontSize: '0.8rem',
-          fontWeight: 600,
-          lineHeight: '36px',
-          textAlign: 'center',
-        }}
       >
         {member.imageUrl ? (
-          <img
-            src={member.imageUrl}
-            alt={member.name ?? 'Account'}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          />
+          <img className="akui-avatar-img" src={member.imageUrl} alt={member.name ?? 'Account'} />
         ) : (
           initials
         )}
       </button>
       {open && (
-        <div
-          role="menu"
-          style={{
-            position: 'absolute',
-            ...(alignLeft ? { left: 0 } : { right: 0 }),
-            top: 'calc(100% + 6px)',
-            minWidth: 180,
-            background: '#fff',
-            color: '#111827',
-            borderRadius: 10,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)',
-            padding: '0.35rem 0',
-            zIndex: 50,
-          }}
-        >
-          <div style={{ padding: '0.4rem 0.9rem 0.5rem', borderBottom: '1px solid #f3f4f6' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{member.name ?? 'Member'}</div>
-            {member.email && (
-              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{member.email}</div>
-            )}
+        <div role="menu" className={`akui-menu ${alignLeft ? 'akui-menu--left' : 'akui-menu--right'}`}>
+          <div className="akui-menu-header">
+            <div className="akui-menu-name">{member.name ?? 'Member'}</div>
+            {member.email && <div className="akui-menu-email">{member.email}</div>}
           </div>
-          <button type="button" role="menuitem" style={itemStyle} onClick={onManageAccount}>
+          <button type="button" role="menuitem" className="akui-menu-item" onClick={onManageAccount}>
+            <PersonIcon />
             Manage account
           </button>
           <button
             type="button"
             role="menuitem"
-            style={itemStyle}
+            className="akui-menu-item"
             onClick={() => {
               setOpen(false)
               void signOut()
             }}
           >
+            <SignOutIcon />
             Sign out
           </button>
         </div>
