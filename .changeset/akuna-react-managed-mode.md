@@ -8,8 +8,8 @@ models:
 
 - New mode-aware components: `<AkunaSignIn>` (managed: "Sign in with Sawala"
   redirect button; BYO: Clerk's `<SignIn>` via `byoProps`), `<AkunaUserButton>`
-  (managed: avatar menu with Manage account — opens the Sawala account window,
-  state refreshes on close — and Sign out; BYO: Clerk's `<UserButton>`), and
+  (managed: avatar menu with Manage account — opens the Sawala account page in a new
+  tab, state refreshes on close — and Sign out; BYO: Clerk's `<UserButton>`), and
   package-owned `<SignedIn>`/`<SignedOut>` gates that work in both modes.
 - `useMember()` is unified across modes and now also returns `signIn`/`signOut`.
 - Managed session engine: CSRF-checked redirect flow, single-use code exchange,

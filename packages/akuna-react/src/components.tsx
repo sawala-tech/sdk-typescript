@@ -123,22 +123,12 @@ export function AkunaSignIn({ label, className, redirectUri, byoProps }: AkunaSi
   )
 }
 
-// Open the Account Portal sized like a modal. Returns the window handle (null
-// when the popup was blocked — the browser then opened nothing, so fall back
-// to a plain new tab).
-function openPortalPopup(url: string): Window | null {
+// Open the Account Portal in a new tab. The handle is kept (no `noopener`) so
+// the opener can poll `.closed` and refresh membership when the visitor is
+// done — the portal is Sawala's own trusted origin, so the opener link is safe.
+function openPortalTab(url: string): Window | null {
   if (typeof window === 'undefined') return null
-  const width = 480
-  const height = 720
-  const left = Math.max(0, (window.screenX ?? 0) + ((window.outerWidth ?? width) - width) / 2)
-  const top = Math.max(0, (window.screenY ?? 0) + 80)
-  const popup = window.open(
-    url,
-    'akuna-account',
-    `popup,width=${width},height=${height},left=${Math.round(left)},top=${Math.round(top)}`,
-  )
-  if (!popup) window.open(url, '_blank', 'noopener')
-  return popup
+  return window.open(url, '_blank')
 }
 
 export interface AkunaUserButtonProps {
@@ -150,7 +140,7 @@ export interface AkunaUserButtonProps {
  * The signed-in avatar menu.
  *  - BYO: renders Clerk's <UserButton> (manage account, sign out — Clerk-hosted UI).
  *  - Managed: an avatar menu with "Manage account" (opens Clerk's hosted
- *    Account Portal in a modal-style popup; membership state refreshes when it
+ *    Account Portal in a new tab; membership state refreshes when the tab
  *    closes) and "Sign out" (discards the member session for THIS site only).
  */
 export function AkunaUserButton({ className }: AkunaUserButtonProps) {
@@ -202,13 +192,13 @@ export function AkunaUserButton({ className }: AkunaUserButtonProps) {
   function onManageAccount() {
     setOpen(false)
     if (!manageAccountUrl) return
-    const popup = openPortalPopup(manageAccountUrl)
-    if (popup && typeof window !== 'undefined') {
-      // When the portal window closes, re-read /auth/me so profile edits
+    const tab = openPortalTab(manageAccountUrl)
+    if (tab && typeof window !== 'undefined') {
+      // When the portal tab closes, re-read /auth/me so profile edits
       // (name, photo) show up immediately — the webhook has already fanned
       // them into the member row by then.
       pollRef.current = window.setInterval(() => {
-        if (popup.closed) {
+        if (tab.closed) {
           if (pollRef.current !== null) window.clearInterval(pollRef.current)
           pollRef.current = null
           void refresh()

@@ -62,12 +62,12 @@ connection's **allowed redirect URIs** and the key's **allowed origins**
 | Export | Managed | BYO |
 |---|---|---|
 | `<AkunaSignIn>` | "Sign in with Sawala" button → hosted login | Your Clerk `<SignIn>` (pass `byoProps`) |
-| `<AkunaUserButton>` | Avatar menu: **Manage account** (Sawala account window: photo, name, password) + **Sign out** | Clerk's `<UserButton>` |
+| `<AkunaUserButton>` | Avatar menu: **Manage account** (opens the Sawala account page: photo, name, password) + **Sign out** | Clerk's `<UserButton>` |
 | `<SignedIn>` / `<SignedOut>` | Gate on the Sawala member session | Gate on the Clerk session |
 | `useMember()` | From `GET /auth/me` | From the live Clerk session |
 
-Managed "Manage account" opens Sawala's hosted account page in a small popup
-window; when it closes, the member state refreshes automatically so a changed
+Managed "Manage account" opens Sawala's hosted account page in a new tab;
+when the tab closes, the member state refreshes automatically so a changed
 name or photo appears immediately.
 
 ### `useMember()`
